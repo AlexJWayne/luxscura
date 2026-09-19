@@ -6,9 +6,9 @@
 		"apps/*"
 	],
 	"scripts": {
-		"build": "bun --filter luxscura build",
-		"test": "bun --filter luxscura test",
-		"typecheck": "bun --filter luxscura typecheck",
+		"build": "bun run --workspaces --if-present build",
+		"test": "bun run --workspaces --if-present test",
+		"typecheck": "bun run --workspaces --if-present typecheck",
 		"check": "biome check .",
 		"format": "biome check --write ."
 	},

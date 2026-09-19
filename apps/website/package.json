@@ -10,13 +10,19 @@
 		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
-		"preact": "^10.29.8"
+		"@typegpu/sdf": "^0.12.0",
+		"luxscura": "workspace:*",
+		"preact": "^10.29.8",
+		"typegpu": "^0.12.5",
+		"wgpu-matrix": "^3.4.2"
 	},
 	"devDependencies": {
 		"@preact/preset-vite": "^2.10.6",
 		"@tailwindcss/vite": "^4.3.3",
+		"@webgpu/types": "^0.1.74",
 		"tailwindcss": "^4.3.3",
 		"typescript": "^6.0.2",
+		"unplugin-typegpu": "^0.12.3",
 		"vite": "^8.3.0"
 	}
 }

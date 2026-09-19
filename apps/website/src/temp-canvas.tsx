@@ -8,7 +8,7 @@ import {
 	RaymarchMaterial,
 } from 'luxscura'
 import { useEffect, useRef } from 'preact/hooks'
-import { type TgpuRoot, tgpu } from 'typegpu'
+import { tgpu } from 'typegpu'
 import { mat4x4f, vec3f } from 'typegpu/data'
 import { mat4 } from 'wgpu-matrix'
 
@@ -73,6 +73,56 @@ const sphereProgram = createRaymarchedProgram(
 	},
 )
 
+async function createSphereRenderer(canvas: HTMLCanvasElement) {
+	const root = await tgpu.init()
+	const context = root.configureContext({
+		canvas,
+		alphaMode: 'opaque',
+	})
+
+	const colorTexture = root
+		.createTexture({
+			size: [canvas.width, canvas.height],
+			format: navigator.gpu.getPreferredCanvasFormat(),
+			sampleCount: 4,
+		})
+		.$usage('render')
+
+	const depthTexture = root
+		.createTexture({
+			size: [canvas.width, canvas.height],
+			format: 'depth24plus',
+			sampleCount: 4,
+		})
+		.$usage('render')
+
+	const render = createRaymarchedRenderer({
+		root,
+		program: sphereProgram,
+		context: undefined, // TODO: Allow omission
+	})
+
+	const colorTextureTarget = {
+		view: colorTexture,
+		resolveTarget: context,
+		loadOp: 'clear',
+		clearValue: [0, 0, 0, 1],
+	} as const
+
+	const depthTextureTarget = {
+		view: depthTexture,
+		depthLoadOp: 'clear',
+		depthClearValue: 1,
+		depthStoreOp: 'store',
+	} as const
+
+	render(colorTextureTarget, depthTextureTarget, 1)
+
+	return {
+		destroy: () => root.destroy(),
+	}
+}
+
 function useSphereRenderer() {
 	const canvasRef = useRef<HTMLCanvasElement>(null)
 
@@ -80,68 +130,17 @@ function useSphereRenderer() {
 		const canvas = canvasRef.current
 		if (!canvas) return
 
-		let root: TgpuRoot | undefined
+		let renderer: Awaited<ReturnType<typeof createSphereRenderer>> | undefined
 		let disposed = false
 
-		async function renderSphere(canvasElement: HTMLCanvasElement) {
-			const nextRoot = await tgpu.init()
-			if (disposed) {
-				nextRoot.destroy()
-				return
-			}
-
-			root = nextRoot
-			const context = root.configureContext({
-				canvas: canvasElement,
-				alphaMode: 'opaque',
-			})
-
-			const colorTexture = root
-				.createTexture({
-					size: [canvasElement.width, canvasElement.height],
-					format: navigator.gpu.getPreferredCanvasFormat(),
-					sampleCount: 4,
-				})
-				.$usage('render')
-
-			const depthTexture = root
-				.createTexture({
-					size: [canvasElement.width, canvasElement.height],
-					format: 'depth24plus',
-					sampleCount: 4,
-				})
-				.$usage('render')
-
-			const render = createRaymarchedRenderer({
-				root,
-				program: sphereProgram,
-				context: undefined,
-			})
-
-			render(
-				{
-					view: colorTexture,
-					resolveTarget: context,
-					loadOp: 'clear',
-					clearValue: [0, 0, 0, 1],
-				},
-				{
-					view: depthTexture,
-					depthLoadOp: 'clear',
-					depthClearValue: 1,
-					depthStoreOp: 'store',
-				},
-				1,
-			)
-		}
-
-		void renderSphere(canvas).catch((error: unknown) => {
-			console.error('Failed to render the Luxscura sphere', error)
+		void createSphereRenderer(canvas).then((nextRenderer) => {
+			if (disposed) nextRenderer.destroy()
+			else renderer = nextRenderer
 		})
 
 		return () => {
 			disposed = true
-			root?.destroy()
+			renderer?.destroy()
 		}
 	}, [])
 

@@ -44,8 +44,8 @@ const sphereProgram = createRaymarchedProgram(
 				'use gpu'
 				return RaymarchMaterial({
 					albedo: vec3f(0.12, 0.45, 0.9),
-					specular: vec3f(0.35),
-					roughness: 0.3,
+					specular: vec3f(0),
+					roughness: 1,
 					emissive: vec3f(0),
 				})
 			},
@@ -95,6 +95,7 @@ function useSphereRenderer() {
 				canvas: canvasElement,
 				alphaMode: 'opaque',
 			})
+
 			const colorTexture = root
 				.createTexture({
 					size: [canvasElement.width, canvasElement.height],
@@ -102,6 +103,7 @@ function useSphereRenderer() {
 					sampleCount: 4,
 				})
 				.$usage('render')
+
 			const depthTexture = root
 				.createTexture({
 					size: [canvasElement.width, canvasElement.height],
@@ -121,7 +123,7 @@ function useSphereRenderer() {
 					view: colorTexture,
 					resolveTarget: context,
 					loadOp: 'clear',
-					clearValue: [0.01, 0.02, 0.05, 1],
+					clearValue: [0, 0, 0, 1],
 				},
 				{
 					view: depthTexture,
@@ -148,6 +150,5 @@ function useSphereRenderer() {
 
 export function TempCanvas() {
 	const canvasRef = useSphereRenderer()
-
 	return <canvas ref={canvasRef} width={800} height={800} />
 }

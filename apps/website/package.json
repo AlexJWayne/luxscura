@@ -1,0 +1,22 @@
+{
+	"name": "@luxscura/website",
+	"private": true,
+	"version": "0.0.0",
+	"type": "module",
+	"scripts": {
+		"dev": "vite",
+		"build": "tsc --noEmit && vite build",
+		"preview": "vite preview",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"preact": "^10.29.8"
+	},
+	"devDependencies": {
+		"@preact/preset-vite": "^2.10.6",
+		"@tailwindcss/vite": "^4.3.3",
+		"tailwindcss": "^4.3.3",
+		"typescript": "^6.0.2",
+		"vite": "^8.3.0"
+	}
+}

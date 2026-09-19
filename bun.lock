@@ -6,6 +6,7 @@
       "name": "luxscura-workspace",
       "devDependencies": {
         "@biomejs/biome": "^2.4.7",
+        "typescript": "npm:tsover@6.0.2",
       },
     },
     "apps/website": {

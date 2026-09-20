@@ -9,12 +9,12 @@ import { AABB } from './aabb'
 import { RaymarchLighting } from './lighting'
 import { RaymarchMaterial } from './material'
 import {
-	createRaymarchedProgram,
+	createRaymarchProgram,
 	type RaymarchHotContext,
 	type RaymarchProgram,
 	type RaymarchSurface,
 } from './program'
-import { createRaymarchedRenderer, RaymarchCamera } from './renderer'
+import { createRaymarchRenderer, RaymarchCamera } from './renderer'
 
 test('rebuilds all program callbacks with current options and the same setup context', () => {
 	const draw = mock((_vertexCount: number, _instanceCount: number) => {})
@@ -82,11 +82,11 @@ test('rebuilds all program callbacks with current options and the same setup con
 	const initialFactory = mock(
 		(_context: { resource: typeof resource }) => initialBody,
 	)
-	const program = createRaymarchedProgram(options, initialFactory, hot)
+	const program = createRaymarchProgram(options, initialFactory, hot)
 	const preparedPrograms: RaymarchProgram[] = []
 	const colorAttachment = {} as ColorAttachment
 	const depthStencilAttachment = {} as DepthStencilAttachment
-	const render = createRaymarchedRenderer({
+	const render = createRaymarchRenderer({
 		root,
 		program,
 		context: { resource },
@@ -175,7 +175,7 @@ test('rebuilds all program callbacks with current options and the same setup con
 	const updatedFactory = mock(
 		(_context: { resource: typeof resource }) => updatedBody,
 	)
-	createRaymarchedProgram(
+	createRaymarchProgram(
 		{ ...options, depthCompare: 'always' },
 		updatedFactory,
 		hot,

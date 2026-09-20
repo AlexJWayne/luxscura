@@ -152,7 +152,7 @@ function createCalculateNormal({
  *
  * @returns A function that draws the requested number of instances.
  */
-function createRaymarchedPipeline({
+function createRaymarchPipeline({
 	root,
 	options,
 	camera,
@@ -303,7 +303,7 @@ function createRaymarchedPipeline({
 }
 
 /**
- * Creates a renderer for a raymarched program. It adds bounds rendering,
+ * Creates a renderer for a raymarch program. It adds bounds rendering,
  * raymarching, normal calculation, lighting, depth, and draw submission to the
  * surface supplied by the program.
  *
@@ -313,7 +313,7 @@ function createRaymarchedPipeline({
  *
  * @returns A function that draws a requested number of raymarched instances.
  */
-export function createRaymarchedRenderer<TContext = undefined>({
+export function createRaymarchRenderer<TContext = undefined>({
 	root,
 	program,
 	context = undefined as TContext,
@@ -355,7 +355,7 @@ export function createRaymarchedRenderer<TContext = undefined>({
 		const { camera, lighting, environment, ...surface } = prepare(
 			program.create(context),
 		)
-		const renderer = createRaymarchedPipeline({
+		const renderer = createRaymarchPipeline({
 			root,
 			options: program.options,
 			surface,

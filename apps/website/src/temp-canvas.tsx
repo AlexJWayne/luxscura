@@ -1,8 +1,8 @@
 import { sdSphere } from '@typegpu/sdf'
 import {
 	AABB,
-	createRaymarchedProgram,
-	createRaymarchedRenderer,
+	createRaymarchProgram,
+	createRaymarchRenderer,
 	RaymarchCamera,
 	RaymarchLighting,
 	RaymarchMaterial,
@@ -12,7 +12,7 @@ import { tgpu } from 'typegpu'
 import { mat4x4f, vec3f } from 'typegpu/data'
 import { mat4 } from 'wgpu-matrix'
 
-const sphereProgram = createRaymarchedProgram(
+const sphereProgram = createRaymarchProgram(
 	{
 		label: 'Hello sphere',
 		epsilon: 0.001,
@@ -84,7 +84,7 @@ async function createSphereRenderer(canvas: HTMLCanvasElement) {
 		})
 		.$usage('render')
 
-	const render = createRaymarchedRenderer({
+	const render = createRaymarchRenderer({
 		root,
 		program: sphereProgram,
 	})

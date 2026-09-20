@@ -103,16 +103,16 @@ const HOT_DATA_KEY = 'raymarchProgramDefinition'
  * definition and increments its version. Renderer instances observe that
  * version and rebuild their pipelines while retaining setup-time resources. The
  * defining module must call `import.meta.hot?.accept()` for this behavior, and
- * may currently define only one HMR-backed raymarched program.
+ * may currently define only one HMR-backed raymarch program.
  *
  * ```ts
- * const program = createRaymarchedProgram(options, create, import.meta.hot)
+ * const program = createRaymarchProgram(options, create, import.meta.hot)
  * import.meta.hot?.accept()
  * ```
  *
- * @returns A read-only program definition consumed by raymarched renderer factories.
+ * @returns A read-only program definition consumed by raymarch renderer factories.
  */
-export function createRaymarchedProgram<TContext = undefined>(
+export function createRaymarchProgram<TContext = undefined>(
 	options: RaymarchProgramOptions,
 	create: (context: TContext) => RaymarchProgram,
 

@@ -6,7 +6,7 @@ import tgpu, {
 } from 'typegpu'
 import { f32, mat4x4f, vec3f } from 'typegpu/data'
 import { AABB } from './aabb'
-import { RaymarchLighting } from './lighting'
+import { createRaymarchConstantLighting } from './lighting'
 import { RaymarchMaterial } from './material'
 import {
 	createRaymarchProgram,
@@ -65,15 +65,16 @@ test('rebuilds all program callbacks with current options and the same setup con
 				viewProjectionMatrix: mat4x4f(),
 			})
 		},
-		lighting: () => {
-			'use gpu'
-			return RaymarchLighting({
-				lightPosition: vec3f(22.25),
-				ambientCoefficient: 0.2,
-				falloffStart: 1,
-				falloffEnd: 2,
-			})
-		},
+		lighting: createRaymarchConstantLighting({
+			ambient: vec3f(0.2),
+			directionalLights: [
+				{
+					direction: vec3f(0, -1, 0),
+					color: vec3f(22.25),
+					intensity: 1,
+				},
+			],
+		}),
 		environment: (_direction, _roughness) => {
 			'use gpu'
 			return vec3f(33.25)
@@ -158,15 +159,16 @@ test('rebuilds all program callbacks with current options and the same setup con
 				viewProjectionMatrix: mat4x4f(),
 			})
 		},
-		lighting: () => {
-			'use gpu'
-			return RaymarchLighting({
-				lightPosition: vec3f(55.25),
-				ambientCoefficient: 0.2,
-				falloffStart: 1,
-				falloffEnd: 2,
-			})
-		},
+		lighting: createRaymarchConstantLighting({
+			ambient: vec3f(0.2),
+			directionalLights: [
+				{
+					direction: vec3f(0, -1, 0),
+					color: vec3f(55.25),
+					intensity: 1,
+				},
+			],
+		}),
 		environment: () => {
 			'use gpu'
 			return vec3f(66.25)

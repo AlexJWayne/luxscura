@@ -1,24 +1,79 @@
-import { f32, type Infer, struct, type v3f, vec3f } from 'typegpu/data'
-import {
-	dot,
-	length,
-	max,
-	mix,
-	normalize,
-	pow,
-	reflect,
-	saturate,
-} from 'typegpu/std'
+import { arrayOf, f32, type Infer, struct, type v3f, vec3f } from 'typegpu/data'
+import { dot, max, normalize, pow, reflect } from 'typegpu/std'
 import type { RaymarchSurfaceSample } from './program'
 
-export const RaymarchLighting = struct({
-	lightPosition: vec3f,
-	ambientCoefficient: f32,
-	falloffStart: f32,
-	falloffEnd: f32,
-})
-export type RaymarchLighting = Infer<typeof RaymarchLighting>
+/** GPU schema for a directional light contributing diffuse illumination. */
+export const RaymarchDirectionalLight = struct({
+	/** Nonzero world-space direction of travel; normalized during shading. */
+	direction: vec3f,
 
+	/** Linear RGB light color. */
+	color: vec3f,
+
+	/** Brightness multiplier; zero disables the light. */
+	intensity: f32,
+})
+
+/** Directional-light values accepted by lighting providers. */
+export type RaymarchLight = Infer<typeof RaymarchDirectionalLight>
+
+const fallbackDirectionalLights = [
+	RaymarchDirectionalLight({
+		direction: vec3f(0, -1, 0),
+		color: vec3f(0),
+		intensity: 0,
+	}),
+]
+
+/**
+ * Creates a GPU lighting schema with a fixed number of light slots.
+ * @throws {RangeError} If capacity is not a positive integer.
+ */
+export function createRaymarchLightingStruct(capacity: number) {
+	if (!Number.isInteger(capacity) || capacity < 1) {
+		throw new RangeError('Lighting capacity must be a positive integer.')
+	}
+
+	return struct({
+		/** Additive linear RGB diffuse fill; black adds no ambient illumination. */
+		ambient: vec3f,
+
+		/** Directional lights evaluated independently and added together. */
+		directionalLights: arrayOf(RaymarchDirectionalLight, capacity),
+	})
+}
+/** Ambient fill and directional-light values returned by a GPU lighting provider. */
+export type RaymarchLighting = Infer<
+	ReturnType<typeof createRaymarchLightingStruct>
+>
+
+/**
+ * Creates a GPU lighting callback with values embedded during shader compilation.
+ * Infers capacity from directionalLights; an empty list uses one disabled slot.
+ */
+export function createRaymarchConstantLighting(lighting: RaymarchLighting) {
+	const directionalLights =
+		lighting.directionalLights.length > 0
+			? lighting.directionalLights
+			: fallbackDirectionalLights
+
+	const RaymarchConstantLighting = createRaymarchLightingStruct(
+		directionalLights.length,
+	)
+
+	return function raymarchLighting() {
+		'use gpu'
+		return RaymarchConstantLighting({
+			ambient: lighting.ambient,
+			directionalLights: directionalLights,
+		})
+	}
+}
+
+/**
+ * Creates a GPU surface shader combining diffuse lighting, material emission,
+ * and environment reflections.
+ */
 export function createShadeSurface({
 	lighting,
 	environment,
@@ -26,22 +81,20 @@ export function createShadeSurface({
 	lighting: () => RaymarchLighting
 	environment: (direction: v3f, roughness: number) => v3f
 }) {
-	function calculateDiffuseLighting(surfacePosition: v3f, normal: v3f): number {
+	function calculateDiffuseLighting(normal: v3f): v3f {
 		'use gpu'
 
-		const lightDirection = lighting().lightPosition.sub(surfacePosition)
-		const normalizedLightDirection = normalize(lightDirection)
+		let accumulatedLight = lighting().ambient
+		const directionalLights = lighting().directionalLights
 
-		let diffuse = max(dot(normalizedLightDirection, normal), 0)
-		const distance = length(lightDirection)
-		const attenuation = saturate(
-			(lighting().falloffEnd - distance) /
-				(lighting().falloffEnd - lighting().falloffStart),
-		)
-		diffuse *= attenuation
-		diffuse = mix(lighting().ambientCoefficient, 1, diffuse)
+		for (const light of directionalLights) {
+			if (light.intensity === 0) continue
+			const normalizedLightDirection = normalize(light.direction)
+			const lambertFactor = max(dot(normal, -1 * normalizedLightDirection), 0)
+			accumulatedLight += light.color * light.intensity * lambertFactor
+		}
 
-		return diffuse
+		return accumulatedLight
 	}
 
 	function calculateReflection(
@@ -67,7 +120,7 @@ export function createShadeSurface({
 		'use gpu'
 
 		const viewDirection = normalize(cameraPosition - sample.position)
-		const diffuse = calculateDiffuseLighting(sample.position, sample.normal)
+		const diffuse = calculateDiffuseLighting(sample.normal)
 		const reflection = calculateReflection(
 			viewDirection,
 			sample.normal,

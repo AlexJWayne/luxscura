@@ -1,10 +1,10 @@
 import { sdSphere } from '@typegpu/sdf'
 import {
 	AABB,
+	createRaymarchConstantLighting,
 	createRaymarchProgram,
 	createRaymarchRenderer,
 	RaymarchCamera,
-	RaymarchLighting,
 	RaymarchMaterial,
 } from 'luxscura'
 import { useEffect, useRef } from 'preact/hooks'
@@ -48,15 +48,22 @@ const sphereProgram = createRaymarchProgram({ epsilon: 0.001 }, () => {
 				viewProjectionMatrix,
 			})
 		},
-		lighting: () => {
-			'use gpu'
-			return RaymarchLighting({
-				lightPosition: vec3f(2, 2, 3),
-				ambientCoefficient: 0.15,
-				falloffStart: 0,
-				falloffEnd: 10,
-			})
-		},
+		lighting: createRaymarchConstantLighting({
+			ambient: vec3f(0, 0.1, 0),
+			directionalLights: [
+				{
+					direction: vec3f(1, -1, -1),
+					color: vec3f(1, 0, 0),
+					intensity: 1.6,
+				},
+				{
+					direction: vec3f(-1, 0, -0.4),
+					color: vec3f(0.05, 0.45, 1),
+					intensity: 0.75,
+				},
+			],
+		}),
+
 		environment: () => {
 			'use gpu'
 			return vec3f(0.04)

@@ -193,7 +193,7 @@ function createRaymarchPipeline({
 	const raymarch = createRaymarch({
 		sdSurface: surface.sd,
 		epsilon: options.epsilon,
-		maxSteps: options.maxSteps,
+		maxSteps: options.maxSteps ?? 100,
 		maxDistance: options.maxDistance,
 		marchBeyondBounds: options.marchBeyondBounds ?? false,
 	})

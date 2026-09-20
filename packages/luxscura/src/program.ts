@@ -34,12 +34,14 @@ export type RaymarchMaterialSampler = (
 ) => RaymarchMaterial
 
 export interface RaymarchProgramOptions {
-	/** Optional diagnostic metadata for consumers; unused by the renderer. */
+	/** Diagnostic metadata for consumers; unused by the renderer. */
 	label?: string
+	/** Surface hit tolerance in world units. */
 	epsilon: number
 	/** Normal sampling offset; defaults to epsilon. */
 	epsilonNormal?: number
-	maxSteps: number
+	/** Maximum number of marching steps per ray; defaults to 100. */
+	maxSteps?: number
 	maxDistance: number
 	marchBeyondBounds?: boolean
 	depthWriteEnabled?: boolean

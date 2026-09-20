@@ -19,7 +19,6 @@ import { mat4 } from 'wgpu-matrix'
 const sphereProgram = createRaymarchProgram(
 	{
 		epsilon: 0.001,
-		maxSteps: 100,
 		maxDistance: 10,
 	},
 	() => {

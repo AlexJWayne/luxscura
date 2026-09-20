@@ -40,6 +40,26 @@ export const RaymarchCamera = struct({
 })
 export type RaymarchCamera = Infer<typeof RaymarchCamera>
 
+export interface RaymarchRenderTargetOptions {
+	/**
+	 * Format of the color attachment.
+	 * @default navigator.gpu.getPreferredCanvasFormat()
+	 */
+	colorFormat?: GPUTextureFormat
+
+	/**
+	 * Format of the depth/stencil attachment.
+	 * @default 'depth24plus'
+	 */
+	depthStencilFormat?: Extract<GPUTextureFormat, `depth${string}`>
+
+	/**
+	 * Number of samples per pixel in each attachment.
+	 * @default 1
+	 */
+	sampleCount?: 1 | 4
+}
+
 const RayHit = struct({ isHit: bool, pos: vec3f, depth: f32 })
 type RayHit = Infer<typeof RayHit>
 
@@ -140,6 +160,7 @@ function createRaymarchedPipeline({
 	environment,
 	surface,
 	preparePipeline = (pipeline) => pipeline,
+	renderTarget,
 }: {
 	root: TgpuRoot
 	options: RaymarchProgramOptions
@@ -150,6 +171,7 @@ function createRaymarchedPipeline({
 	preparePipeline?: (
 		pipeline: TgpuRenderPipeline<{ color: Vec4f }>,
 	) => TgpuRenderPipeline<{ color: Vec4f }>
+	renderTarget?: Readonly<RaymarchRenderTargetOptions>
 }) {
 	const shadeSurface = createShadeSurface({
 		lighting,
@@ -178,15 +200,16 @@ function createRaymarchedPipeline({
 
 	const pipeline = preparePipeline(
 		root.createRenderPipeline({
-			multisample: { count: 4 }, // TODO: don't require 4x multisampling.
+			multisample: { count: renderTarget?.sampleCount },
 			depthStencil: {
-				format: 'depth24plus',
+				format: renderTarget?.depthStencilFormat ?? 'depth24plus',
 				depthWriteEnabled: options.depthWriteEnabled ?? true,
 				depthCompare: options.depthCompare ?? 'less',
 			},
 			primitive: { topology: 'triangle-list', cullMode: 'back' },
 			targets: {
 				color: {
+					format: renderTarget?.colorFormat,
 					blend: {
 						color: {
 							srcFactor: 'src-alpha',
@@ -294,6 +317,7 @@ export function createRaymarchedRenderer<TContext>({
 	root,
 	program,
 	context,
+	renderTarget,
 	prepare = (program) => program,
 	preparePipeline,
 }: {
@@ -304,6 +328,9 @@ export function createRaymarchedRenderer<TContext>({
 
 	/** Setup-time context passed to the program's factory. */
 	context: TContext
+
+	/** Render target configuration used to create a compatible pipeline. */
+	renderTarget?: Readonly<RaymarchRenderTargetOptions>
 
 	/**
 	 * Optional program transformation applied after program creation and before
@@ -331,6 +358,7 @@ export function createRaymarchedRenderer<TContext>({
 			lighting,
 			environment,
 			preparePipeline,
+			renderTarget,
 		})
 
 		return renderer

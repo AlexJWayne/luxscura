@@ -75,24 +75,12 @@ const sphereProgram = createRaymarchedProgram(
 
 async function createSphereRenderer(canvas: HTMLCanvasElement) {
 	const root = await tgpu.init()
-	const context = root.configureContext({
-		canvas,
-		alphaMode: 'opaque',
-	})
-
-	const colorTexture = root
-		.createTexture({
-			size: [canvas.width, canvas.height],
-			format: navigator.gpu.getPreferredCanvasFormat(),
-			sampleCount: 4,
-		})
-		.$usage('render')
+	const context = root.configureContext({ canvas })
 
 	const depthTexture = root
 		.createTexture({
 			size: [canvas.width, canvas.height],
 			format: 'depth24plus',
-			sampleCount: 4,
 		})
 		.$usage('render')
 
@@ -103,8 +91,7 @@ async function createSphereRenderer(canvas: HTMLCanvasElement) {
 	})
 
 	const colorTextureTarget = {
-		view: colorTexture,
-		resolveTarget: context,
+		view: context,
 		loadOp: 'clear',
 		clearValue: [0, 0, 0, 1],
 	} as const

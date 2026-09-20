@@ -34,7 +34,8 @@ export type RaymarchMaterialSampler = (
 ) => RaymarchMaterial
 
 export interface RaymarchProgramOptions {
-	label: string
+	/** Optional diagnostic metadata for consumers; unused by the renderer. */
+	label?: string
 	epsilon: number
 	epsilonNormal: number
 	maxSteps: number

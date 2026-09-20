@@ -18,7 +18,6 @@ import { mat4 } from 'wgpu-matrix'
 
 const sphereProgram = createRaymarchProgram(
 	{
-		label: 'Hello sphere',
 		epsilon: 0.001,
 		epsilonNormal: 0.001,
 		maxSteps: 100,

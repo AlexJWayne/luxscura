@@ -8,7 +8,11 @@ import {
 	RaymarchMaterial,
 } from 'luxscura'
 import { useEffect, useRef } from 'preact/hooks'
-import { tgpu } from 'typegpu'
+import {
+	type ColorAttachment,
+	type DepthStencilAttachment,
+	tgpu,
+} from 'typegpu'
 import { mat4x4f, vec3f } from 'typegpu/data'
 import { mat4 } from 'wgpu-matrix'
 
@@ -89,19 +93,8 @@ async function createSphereRenderer(canvas: HTMLCanvasElement) {
 		program: sphereProgram,
 	})
 
-	const colorTextureTarget = {
-		view: context,
-		loadOp: 'clear',
-		clearValue: [0, 0, 0, 1],
-	} as const
-
-	const depthTextureTarget = {
-		view: depthTexture,
-		depthLoadOp: 'clear',
-		depthClearValue: 1,
-		depthStoreOp: 'store',
-	} as const
-
+	const colorTextureTarget: ColorAttachment = { view: context }
+	const depthTextureTarget: DepthStencilAttachment = { view: depthTexture }
 	render(colorTextureTarget, depthTextureTarget, 1)
 
 	return {

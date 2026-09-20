@@ -343,14 +343,8 @@ export function createRaymarchRenderer<TContext = undefined>({
 		pipeline: TgpuRenderPipeline<{ color: Vec4f }>,
 	) => TgpuRenderPipeline<{ color: Vec4f }>
 } & (undefined extends TContext
-	? {
-			/** Setup-time context passed to the program's factory. */
-			context?: TContext
-		}
-	: {
-			/** Setup-time context passed to the program's factory. */
-			context: TContext
-		})) {
+	? { context?: TContext }
+	: { context: TContext })) {
 	function createRenderer() {
 		const { camera, lighting, environment, ...surface } = prepare(
 			program.create(context),

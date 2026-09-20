@@ -112,7 +112,7 @@ const HOT_DATA_KEY = 'raymarchProgramDefinition'
  *
  * @returns A read-only program definition consumed by raymarched renderer factories.
  */
-export function createRaymarchedProgram<TContext>(
+export function createRaymarchedProgram<TContext = undefined>(
 	options: RaymarchProgramOptions,
 	create: (context: TContext) => RaymarchProgram,
 

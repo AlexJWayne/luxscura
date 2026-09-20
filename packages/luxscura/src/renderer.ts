@@ -313,10 +313,10 @@ function createRaymarchedPipeline({
  *
  * @returns A function that draws a requested number of raymarched instances.
  */
-export function createRaymarchedRenderer<TContext>({
+export function createRaymarchedRenderer<TContext = undefined>({
 	root,
 	program,
-	context,
+	context = undefined as TContext,
 	renderTarget,
 	prepare = (program) => program,
 	preparePipeline,
@@ -325,9 +325,6 @@ export function createRaymarchedRenderer<TContext>({
 
 	/** Program providing pipeline options, a version, and the shader factory. */
 	program: Readonly<RaymarchProgramDefinition<TContext>>
-
-	/** Setup-time context passed to the program's factory. */
-	context: TContext
 
 	/** Render target configuration used to create a compatible pipeline. */
 	renderTarget?: Readonly<RaymarchRenderTargetOptions>
@@ -345,7 +342,15 @@ export function createRaymarchedRenderer<TContext>({
 	preparePipeline?: (
 		pipeline: TgpuRenderPipeline<{ color: Vec4f }>,
 	) => TgpuRenderPipeline<{ color: Vec4f }>
-}) {
+} & (undefined extends TContext
+	? {
+			/** Setup-time context passed to the program's factory. */
+			context?: TContext
+		}
+	: {
+			/** Setup-time context passed to the program's factory. */
+			context: TContext
+		})) {
 	function createRenderer() {
 		const { camera, lighting, environment, ...surface } = prepare(
 			program.create(context),

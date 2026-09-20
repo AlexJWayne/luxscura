@@ -87,7 +87,6 @@ async function createSphereRenderer(canvas: HTMLCanvasElement) {
 	const render = createRaymarchedRenderer({
 		root,
 		program: sphereProgram,
-		context: undefined, // TODO: Allow omission
 	})
 
 	const colorTextureTarget = {

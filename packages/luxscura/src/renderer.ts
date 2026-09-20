@@ -187,7 +187,7 @@ function createRaymarchPipeline({
 
 	const calculateNormal = createCalculateNormal({
 		sdSurface: surface.sd,
-		epsilonNormal: options.epsilonNormal,
+		epsilonNormal: options.epsilonNormal ?? options.epsilon,
 	})
 
 	const raymarch = createRaymarch({

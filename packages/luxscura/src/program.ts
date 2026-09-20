@@ -37,7 +37,8 @@ export interface RaymarchProgramOptions {
 	/** Optional diagnostic metadata for consumers; unused by the renderer. */
 	label?: string
 	epsilon: number
-	epsilonNormal: number
+	/** Normal sampling offset; defaults to epsilon. */
+	epsilonNormal?: number
 	maxSteps: number
 	maxDistance: number
 	marchBeyondBounds?: boolean

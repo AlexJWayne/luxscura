@@ -16,63 +16,53 @@ import {
 import { mat4x4f, vec3f } from 'typegpu/data'
 import { mat4 } from 'wgpu-matrix'
 
-const sphereProgram = createRaymarchProgram(
-	{
-		epsilon: 0.001,
-		maxDistance: 10,
-	},
-	() => {
-		const cameraPosition = vec3f(0, 0, 4)
-		const viewProjectionMatrix = mat4x4f()
-		const projectionMatrix = mat4.perspective(Math.PI / 4, 1, 0.1, 100)
-		const viewMatrix = mat4.lookAt(
-			cameraPosition,
-			vec3f(0, 0, 0),
-			vec3f(0, 1, 0),
-		)
-		mat4.multiply(projectionMatrix, viewMatrix, viewProjectionMatrix)
+const sphereProgram = createRaymarchProgram({ epsilon: 0.001 }, () => {
+	const cameraPosition = vec3f(0, 0, 4)
+	const viewProjectionMatrix = mat4x4f()
+	const projectionMatrix = mat4.perspective(Math.PI / 4, 1, 0.1, 100)
+	const viewMatrix = mat4.lookAt(cameraPosition, vec3f(0, 0, 0), vec3f(0, 1, 0))
+	mat4.multiply(projectionMatrix, viewMatrix, viewProjectionMatrix)
 
-		return {
-			bounds: () => {
-				'use gpu'
-				return AABB({ min: vec3f(-1), max: vec3f(1) })
-			},
-			sd: (point) => {
-				'use gpu'
-				return sdSphere(point, 0.8)
-			},
-			sample: () => {
-				'use gpu'
-				return RaymarchMaterial({
-					albedo: vec3f(0.12, 0.45, 0.9),
-					specular: vec3f(0),
-					roughness: 1,
-					emissive: vec3f(0),
-				})
-			},
-			camera: () => {
-				'use gpu'
-				return RaymarchCamera({
-					position: cameraPosition,
-					viewProjectionMatrix,
-				})
-			},
-			lighting: () => {
-				'use gpu'
-				return RaymarchLighting({
-					lightPosition: vec3f(2, 2, 3),
-					ambientCoefficient: 0.15,
-					falloffStart: 0,
-					falloffEnd: 10,
-				})
-			},
-			environment: () => {
-				'use gpu'
-				return vec3f(0.04)
-			},
-		}
-	},
-)
+	return {
+		bounds: () => {
+			'use gpu'
+			return AABB({ min: vec3f(-1), max: vec3f(1) })
+		},
+		sd: (point) => {
+			'use gpu'
+			return sdSphere(point, 0.8)
+		},
+		sample: () => {
+			'use gpu'
+			return RaymarchMaterial({
+				albedo: vec3f(0.12, 0.45, 0.9),
+				specular: vec3f(0),
+				roughness: 1,
+				emissive: vec3f(0),
+			})
+		},
+		camera: () => {
+			'use gpu'
+			return RaymarchCamera({
+				position: cameraPosition,
+				viewProjectionMatrix,
+			})
+		},
+		lighting: () => {
+			'use gpu'
+			return RaymarchLighting({
+				lightPosition: vec3f(2, 2, 3),
+				ambientCoefficient: 0.15,
+				falloffStart: 0,
+				falloffEnd: 10,
+			})
+		},
+		environment: () => {
+			'use gpu'
+			return vec3f(0.04)
+		},
+	}
+})
 
 async function createSphereRenderer(canvas: HTMLCanvasElement) {
 	const root = await tgpu.init()

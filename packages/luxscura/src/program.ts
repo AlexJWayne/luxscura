@@ -33,8 +33,8 @@ export type RaymarchMaterialSampler = (
 	aabb: AABB,
 ) => RaymarchMaterial
 
-export interface RaymarchProgramOptions {
-	/** Diagnostic metadata for consumers; unused by the renderer. */
+export type RaymarchProgramOptions = {
+	/** Diagnostic metadata for consumers. Unused by the renderer. */
 	label?: string
 	/** Surface hit tolerance in world units. */
 	epsilon: number
@@ -42,11 +42,22 @@ export interface RaymarchProgramOptions {
 	epsilonNormal?: number
 	/** Maximum number of marching steps per ray; defaults to 100. */
 	maxSteps?: number
-	maxDistance: number
-	marchBeyondBounds?: boolean
 	depthWriteEnabled?: boolean
 	depthCompare?: GPUCompareFunction
-}
+} & (
+	| {
+			/** Allow marching past the bounding-box exit. Defaults to false; requires maxDistance when true. */
+			marchBeyondBounds?: false
+			/** Maximum distance to march from the bounding-box entry point, in world units. */
+			maxDistance?: number
+	  }
+	| {
+			/** Allow marching past the bounding-box exit. Defaults to false; requires maxDistance when true. */
+			marchBeyondBounds: true
+			/** Maximum distance to march from the bounding-box entry point, in world units. */
+			maxDistance: number
+	  }
+)
 
 /** Flat shader definition compiled into a raymarching pipeline. */
 export interface RaymarchProgram {

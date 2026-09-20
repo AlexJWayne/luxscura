@@ -72,7 +72,7 @@ function createRaymarch({
 }: {
 	sdSurface: RaymarchDistanceFunction
 	maxSteps: number
-	maxDistance: number
+	maxDistance?: number
 	epsilon: number
 	marchBeyondBounds: boolean
 }) {
@@ -89,9 +89,12 @@ function createRaymarch({
 
 		let marchedDistance = f32(0)
 		let point = camera.position + rayDirection * triangleDistance
-		let marchLimit = f32(maxDistance)
-		if (!marchBeyondBounds) {
-			marchLimit = min(marchLimit, aabbExitDistance(aabb, point, rayDirection))
+
+		let marchLimit = aabbExitDistance(aabb, point, rayDirection)
+		if (marchBeyondBounds) {
+			marchLimit = f32(maxDistance ?? 0)
+		} else if (maxDistance !== undefined) {
+			marchLimit = min(marchLimit, maxDistance)
 		}
 
 		for (let stepIndex = 0; stepIndex < maxSteps; stepIndex++) {

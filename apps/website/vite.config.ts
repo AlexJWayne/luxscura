@@ -1,6 +1,6 @@
+import { fileURLToPath } from 'node:url'
 import preact from '@preact/preset-vite'
 import tailwindcss from '@tailwindcss/vite'
-import { fileURLToPath } from 'node:url'
 import typegpuPlugin from 'unplugin-typegpu/vite'
 import { defineConfig } from 'vite'
 

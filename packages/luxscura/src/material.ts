@@ -1,11 +1,27 @@
 import { f32, type Infer, struct, vec3f } from 'typegpu/data'
 import { mix } from 'typegpu/std'
 
+/**
+ * GPU material schema for an opaque surface using metallic/roughness shading.
+ * Colors are linear RGB. Callers must supply finite values within the documented
+ * ranges; constructing this struct does not clamp or validate material values.
+ */
 export const RaymarchMaterial = struct({
-	albedo: vec3f,
-	specular: vec3f,
+	/** Diffuse color for nonmetals, specular reflection color for metals. Each channel is in [0, 1]. */
+	baseColor: vec3f,
+	/** Nonmetal at 0, metal at 1; intermediate values blend the responses. Not a shininess control. */
+	metallic: f32,
+	/**
+	 * Surface roughness in [0, 1]: 0 produces sharp highlights, 1 broad highlights.
+	 * Direct shading applies a small internal floor at the smooth end for stability.
+	 * Passed to the environment callback, which currently determines reflection filtering.
+	 */
 	roughness: f32,
-	emissive: vec3f,
+	/**
+	 * Nonnegative outgoing linear RGB added independently of illumination; may exceed 1.
+	 * Does not illuminate other surfaces or disable this material's reflections.
+	 */
+	emission: vec3f,
 })
 export type RaymarchMaterial = Infer<typeof RaymarchMaterial>
 
@@ -13,10 +29,10 @@ export type RaymarchMaterial = Infer<typeof RaymarchMaterial>
 export function debugMaterial(luminance: number): RaymarchMaterial {
 	'use gpu'
 	return RaymarchMaterial({
-		albedo: vec3f(0),
-		specular: vec3f(0),
+		baseColor: vec3f(0),
+		metallic: f32(0),
 		roughness: f32(1),
-		emissive: vec3f(luminance),
+		emission: vec3f(luminance),
 	})
 }
 
@@ -27,9 +43,9 @@ export function mixMaterials(
 ): RaymarchMaterial {
 	'use gpu'
 	return RaymarchMaterial({
-		albedo: mix(a.albedo, b.albedo, amount),
-		specular: mix(a.specular, b.specular, amount),
+		baseColor: mix(a.baseColor, b.baseColor, amount),
+		metallic: mix(a.metallic, b.metallic, amount),
 		roughness: mix(a.roughness, b.roughness, amount),
-		emissive: mix(a.emissive, b.emissive, amount),
+		emission: mix(a.emission, b.emission, amount),
 	})
 }

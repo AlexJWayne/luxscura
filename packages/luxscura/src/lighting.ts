@@ -1,8 +1,18 @@
 import { arrayOf, f32, type Infer, struct, type v3f, vec3f } from 'typegpu/data'
-import { dot, max, normalize, pow, reflect } from 'typegpu/std'
+import {
+	clamp,
+	dot,
+	max,
+	mix,
+	normalize,
+	pow,
+	reflect,
+	sqrt,
+} from 'typegpu/std'
+import type { RaymarchMaterial } from './material'
 import type { RaymarchSurfaceSample } from './program'
 
-/** GPU schema for a directional light contributing diffuse illumination. */
+/** GPU schema for a directional light contributing diffuse and specular illumination. */
 export const RaymarchDirectionalLight = struct({
 	/** Nonzero world-space direction of travel; normalized during shading. */
 	direction: vec3f,
@@ -70,8 +80,91 @@ export function createRaymarchConstantLighting(lighting: RaymarchLighting) {
 	}
 }
 
+/** Schlick Fresnel approximation; cosTheta is the incident angle's cosine in [0, 1]. */
+function fresnelSchlick(cosTheta: number, specularF0: v3f): v3f {
+	'use gpu'
+	return specularF0 + (1 - specularF0) * pow(1 - cosTheta, 5)
+}
+
 /**
- * Creates a GPU surface shader combining diffuse lighting, material emission,
+ * GGX microfacet distribution; normalDotHalf is in [0, 1].
+ * alpha is material roughness squared, with a positive floor applied by the caller.
+ */
+function distributionGGX(normalDotHalf: number, alpha: number): number {
+	'use gpu'
+	const alphaSquared = alpha * alpha
+	const denominator = normalDotHalf * normalDotHalf * (alphaSquared - 1) + 1
+	return alphaSquared / (Math.PI * denominator * denominator)
+}
+
+/**
+ * Height-correlated Smith GGX visibility, including G / (4 NdotL NdotV).
+ * Both cosines must be in (0, 1]; alpha uses the same positive floor as GGX.
+ */
+function visibilitySmithGGX(
+	normalDotView: number,
+	normalDotLight: number,
+	alpha: number,
+): number {
+	'use gpu'
+	const alphaSquared = alpha * alpha
+	const viewTerm =
+		normalDotLight *
+		sqrt(normalDotView * normalDotView * (1 - alphaSquared) + alphaSquared)
+	const lightTerm =
+		normalDotView *
+		sqrt(normalDotLight * normalDotLight * (1 - alphaSquared) + alphaSquared)
+	return 0.5 / (viewTerm + lightTerm)
+}
+
+/** Combines the microfacet distribution, visibility, and Fresnel response. */
+function calculateSpecularResponse(
+	normalDotView: number,
+	normalDotLight: number,
+	normalDotHalf: number,
+	alpha: number,
+	fresnel: v3f,
+): v3f {
+	'use gpu'
+	const distribution = distributionGGX(normalDotHalf, alpha)
+	const visibility = visibilitySmithGGX(normalDotView, normalDotLight, alpha)
+	return distribution * visibility * fresnel
+}
+
+/** Material response including the surface-facing factor, before light color/intensity. */
+function evaluateDirectLightResponse(
+	normal: v3f,
+	viewDirection: v3f,
+	lightDirection: v3f,
+	normalDotView: number,
+	diffuseColor: v3f,
+	specularF0: v3f,
+	alpha: number,
+): v3f {
+	'use gpu'
+	const normalDotLight = clamp(dot(normal, lightDirection), 0, 1)
+	if (normalDotView === 0 || normalDotLight === 0) return vec3f(0)
+
+	const halfwayDirection = normalize(viewDirection + lightDirection)
+	const normalDotHalf = clamp(dot(normal, halfwayDirection), 0, 1)
+	const viewDotHalf = clamp(dot(viewDirection, halfwayDirection), 0, 1)
+	const fresnel = fresnelSchlick(viewDotHalf, specularF0)
+	const specular = calculateSpecularResponse(
+		normalDotView,
+		normalDotLight,
+		normalDotHalf,
+		alpha,
+		fresnel,
+	)
+
+	// Only the nonmetal response contributes diffuse reflection.
+	const dielectricFresnel = fresnelSchlick(viewDotHalf, vec3f(0.04))
+	const diffuse = ((1 - dielectricFresnel) * diffuseColor) / Math.PI
+	return normalDotLight * (diffuse + specular)
+}
+
+/**
+ * Creates a GPU surface shader combining direct lighting, material emission,
  * and environment reflections.
  */
 export function createShadeSurface({
@@ -81,17 +174,37 @@ export function createShadeSurface({
 	lighting: () => RaymarchLighting
 	environment: (direction: v3f, roughness: number) => v3f
 }) {
-	function calculateDiffuseLighting(normal: v3f): v3f {
+	function calculateDirectLighting(
+		viewDirection: v3f,
+		normal: v3f,
+		material: RaymarchMaterial,
+		specularF0: v3f,
+	): v3f {
 		'use gpu'
 
-		let accumulatedLight = lighting().ambient
+		const diffuseColor = material.baseColor * (1 - material.metallic)
+		let accumulatedLight = lighting().ambient * diffuseColor
 		const directionalLights = lighting().directionalLights
+		const normalDotView = clamp(dot(normal, viewDirection), 0, 1)
+		if (normalDotView === 0) return accumulatedLight
+
+		const minimumAlpha = 0.001 // Keep the GGX response finite even for material roughness zero.
+		const alpha = max(material.roughness * material.roughness, minimumAlpha)
 
 		for (const light of directionalLights) {
 			if (light.intensity === 0) continue
-			const normalizedLightDirection = normalize(light.direction)
-			const lambertFactor = max(dot(normal, -1 * normalizedLightDirection), 0)
-			accumulatedLight += light.color * light.intensity * lambertFactor
+
+			const lightDirection = -1 * normalize(light.direction)
+			const response = evaluateDirectLightResponse(
+				normal,
+				viewDirection,
+				lightDirection,
+				normalDotView,
+				diffuseColor,
+				specularF0,
+				alpha,
+			)
+			accumulatedLight += light.color * light.intensity * response
 		}
 
 		return accumulatedLight
@@ -100,15 +213,15 @@ export function createShadeSurface({
 	function calculateReflection(
 		viewDirection: v3f,
 		normal: v3f,
-		specular: v3f,
+		specularF0: v3f,
 		roughness: number,
 	): v3f {
 		'use gpu'
 
-		const reflectionDirection = reflect(vec3f(-viewDirection), normal)
+		const reflectionDirection = reflect(-1 * viewDirection, normal)
 		const environmentColor = environment(reflectionDirection, roughness)
 		const facing = max(dot(normal, viewDirection), 0)
-		const fresnel = specular + (1 - specular) * pow(1 - facing, 5)
+		const fresnel = fresnelSchlick(facing, specularF0)
 
 		return environmentColor * fresnel
 	}
@@ -119,17 +232,26 @@ export function createShadeSurface({
 	): v3f {
 		'use gpu'
 
+		const material = sample.material
 		const viewDirection = normalize(cameraPosition - sample.position)
-		const diffuse = calculateDiffuseLighting(sample.normal)
+
+		const dielectricF0 = vec3f(0.04) // Normal-incidence reflectance for a nonmetal with IOR 1.5.
+		const specularF0 = mix(dielectricF0, material.baseColor, material.metallic)
+
+		const directLighting = calculateDirectLighting(
+			viewDirection,
+			sample.normal,
+			material,
+			specularF0,
+		)
+
 		const reflection = calculateReflection(
 			viewDirection,
 			sample.normal,
-			sample.material.specular,
-			sample.material.roughness,
+			specularF0,
+			material.roughness,
 		)
 
-		return (
-			sample.material.albedo * diffuse + sample.material.emissive + reflection
-		)
+		return directLighting + material.emission + reflection
 	}
 }

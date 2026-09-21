@@ -30,43 +30,44 @@ const sphereProgram = createRaymarchProgram({ epsilon: 0.001 }, () => {
 		},
 		sd: (point) => {
 			'use gpu'
-			return sdSphere(point, 0.8)
+			return sdSphere(point - vec3f(0), 0.8)
 		},
 		sample: () => {
 			'use gpu'
 			return RaymarchMaterial({
-				albedo: vec3f(0.12, 0.45, 0.9),
-				specular: vec3f(0),
-				roughness: 1,
-				emissive: vec3f(0),
+				baseColor: vec3f(0.12, 0.45, 0.9),
+				metallic: 0.25,
+				roughness: 0.4,
+				emission: vec3f(0),
 			})
 		},
+		lighting: createRaymarchConstantLighting({
+			ambient: vec3f(0, 0, 0),
+			directionalLights: [
+				{
+					direction: vec3f(-1, -1, -1),
+					color: vec3f(1, 1, 1),
+					intensity: 1.6,
+				},
+				{
+					direction: vec3f(1, 0, -0.4),
+					color: vec3f(1, 0.8, 0.45),
+					intensity: 0.75,
+				},
+			],
+		}),
+
+		environment: (direction) => {
+			'use gpu'
+			return direction.y < 0 ? vec3f(0.2, 0.1, 0) : vec3f(0, 0.1, 0.2)
+		},
+
 		camera: () => {
 			'use gpu'
 			return RaymarchCamera({
 				position: cameraPosition,
 				viewProjectionMatrix,
 			})
-		},
-		lighting: createRaymarchConstantLighting({
-			ambient: vec3f(0, 0.1, 0),
-			directionalLights: [
-				{
-					direction: vec3f(1, -1, -1),
-					color: vec3f(1, 0, 0),
-					intensity: 1.6,
-				},
-				{
-					direction: vec3f(-1, 0, -0.4),
-					color: vec3f(0.05, 0.45, 1),
-					intensity: 0.75,
-				},
-			],
-		}),
-
-		environment: () => {
-			'use gpu'
-			return vec3f(0.04)
 		},
 	}
 })

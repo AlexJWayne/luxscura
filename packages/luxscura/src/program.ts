@@ -87,7 +87,13 @@ export interface RaymarchProgram {
 	/** GPU function providing the current lighting state. */
 	lighting: () => RaymarchLighting
 
-	/** GPU function sampling environment lighting for reflections. */
+	/**
+	 * GPU function returning incoming light from a normalized world-space direction
+	 * pointing from the surface toward the environment. Returns nonnegative linear
+	 * RGB lighting, which may exceed 1. Called once per surface hit at the mirror
+	 * reflection direction, with material roughness in [0, 1]. The consumer owns any
+	 * roughness-dependent filtering; ignoring roughness produces sharp reflections.
+	 */
 	environment: (direction: v3f, roughness: number) => v3f
 }
 

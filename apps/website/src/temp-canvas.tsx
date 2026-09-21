@@ -1,4 +1,4 @@
-import { sdSphere } from '@typegpu/sdf'
+import { opSmoothUnion, sdBox3d, sdSphere } from '@typegpu/sdf'
 import {
 	AABB,
 	createRaymarchConstantLighting,
@@ -8,21 +8,20 @@ import {
 	RaymarchMaterial,
 } from 'luxscura'
 import { useEffect, useRef } from 'preact/hooks'
-import {
-	type ColorAttachment,
-	type DepthStencilAttachment,
-	tgpu,
-} from 'typegpu'
-import { mat4x4f, vec3f } from 'typegpu/data'
+import { tgpu } from 'typegpu'
+import { mat4x4f, vec2f, vec3f } from 'typegpu/data'
+import { atan2, mix, sin, smoothstep } from 'typegpu/std'
 import { mat4 } from 'wgpu-matrix'
 
 const sphereProgram = createRaymarchProgram({ epsilon: 0.001 }, () => {
+	// Camera setup
 	const cameraPosition = vec3f(0, 0, 4)
 	const viewProjectionMatrix = mat4x4f()
 	const projectionMatrix = mat4.perspective(Math.PI / 4, 1, 0.1, 100)
 	const viewMatrix = mat4.lookAt(cameraPosition, vec3f(0, 0, 0), vec3f(0, 1, 0))
 	mat4.multiply(projectionMatrix, viewMatrix, viewProjectionMatrix)
 
+	// Return the raymarch program
 	return {
 		bounds: () => {
 			'use gpu'
@@ -30,19 +29,23 @@ const sphereProgram = createRaymarchProgram({ epsilon: 0.001 }, () => {
 		},
 		sd: (point) => {
 			'use gpu'
-			return sdSphere(point - vec3f(0), 0.8)
+			return opSmoothUnion(
+				sdSphere(point - vec3f(0), 0.8),
+				sdBox3d(point - vec3f(vec2f(0.5), 0), vec3f(0.45)),
+				0.3,
+			)
 		},
 		sample: () => {
 			'use gpu'
 			return RaymarchMaterial({
 				baseColor: vec3f(0.12, 0.45, 0.9),
-				metallic: 0.25,
-				roughness: 0.4,
+				metallic: 0.5,
+				roughness: 0.2,
 				emission: vec3f(0),
 			})
 		},
 		lighting: createRaymarchConstantLighting({
-			ambient: vec3f(0, 0, 0),
+			ambient: vec3f(0),
 			directionalLights: [
 				{
 					direction: vec3f(-1, -1, -1),
@@ -50,24 +53,29 @@ const sphereProgram = createRaymarchProgram({ epsilon: 0.001 }, () => {
 					intensity: 1.6,
 				},
 				{
-					direction: vec3f(1, 0, -0.4),
-					color: vec3f(1, 0.8, 0.45),
+					direction: vec3f(5, -8, -1),
+					color: vec3f(1, 0.15, 0.1),
 					intensity: 0.75,
 				},
 			],
 		}),
 
-		environment: (direction) => {
+		environment: (direction, roughness) => {
 			'use gpu'
-			return direction.y < 0 ? vec3f(0.2, 0.1, 0) : vec3f(0, 0.1, 0.2)
+
+			const angle = atan2(direction.x, direction.z) * Math.PI
+			const y =
+				direction.y + //
+				sin(angle * 3) * 0.08 +
+				sin(angle * 1) * 0.12
+
+			const skyOrGround = smoothstep(-roughness, roughness, y)
+			return mix(vec3f(0.3, 0.15, 0), vec3f(0, 0.3, 0.6), skyOrGround)
 		},
 
 		camera: () => {
 			'use gpu'
-			return RaymarchCamera({
-				position: cameraPosition,
-				viewProjectionMatrix,
-			})
+			return RaymarchCamera({ position: cameraPosition, viewProjectionMatrix })
 		},
 	}
 })
@@ -88,9 +96,8 @@ async function createSphereRenderer(canvas: HTMLCanvasElement) {
 		program: sphereProgram,
 	})
 
-	const colorTextureTarget: ColorAttachment = { view: context }
-	const depthTextureTarget: DepthStencilAttachment = { view: depthTexture }
-	render(colorTextureTarget, depthTextureTarget, 1)
+	// render the scene
+	render({ view: context }, { view: depthTexture }, 1)
 
 	return {
 		destroy: () => root.destroy(),

@@ -18,24 +18,25 @@ function shade({
 	material = {},
 	lights = [whiteLight],
 	view = vec3f(0, 0, 1),
+	normal = vec3f(0, 0, 1),
+	environment = () => vec3f(0),
 }: {
 	material?: Partial<RaymarchMaterial>
 	lights?: RaymarchLight[]
 	view?: v3f
+	normal?: v3f
+	environment?: (direction: v3f, roughness: number) => v3f
 } = {}) {
 	const shadeSurface = createShadeSurface({
 		lighting: createRaymarchConstantLighting({
 			ambient: vec3f(0),
 			directionalLights: lights,
 		}),
-		environment: () => {
-			'use gpu'
-			return vec3f(0)
-		},
+		environment,
 	})
 	const sample = RaymarchSurfaceSample({
 		position: vec3f(0),
-		normal: vec3f(0, 0, 1),
+		normal,
 		material: RaymarchMaterial({
 			baseColor: vec3f(0.8, 0.2, 0.1),
 			metallic: 0,
@@ -52,6 +53,83 @@ function expectColor(actual: v3f, expected: v3f) {
 	expect(actual.y).toBeCloseTo(expected.y, 5)
 	expect(actual.z).toBeCloseTo(expected.z, 5)
 }
+
+describe('single-sample environment reflection', () => {
+	test('smooth metals preserve HDR environment color, while nonmetals reflect neutrally', () => {
+		const environment = () => vec3f(2, 1, 0.5)
+		expectColor(
+			shade({
+				lights: [],
+				environment,
+				material: { metallic: 1, roughness: 0 },
+			}),
+			vec3f(1.6, 0.2, 0.05),
+		)
+		expectColor(
+			shade({
+				lights: [],
+				environment,
+				material: { baseColor: vec3f(0), roughness: 0 },
+			}),
+			vec3f(0.08, 0.04, 0.02),
+		)
+	})
+
+	test('passes one normalized reflection direction and material roughness to the callback', () => {
+		for (const normal of [vec3f(0, 0, 1), vec3f(0, 0, -1), vec3f(1, 0, 0)]) {
+			let calls = 0
+			const color = shade({
+				lights: [],
+				normal,
+				view: normal,
+				material: { baseColor: vec3f(1), metallic: 1, roughness: 0.6 },
+				environment: (direction, roughness) => {
+					calls++
+					expect(roughness).toBeCloseTo(0.6, 6)
+					expectColor(direction, normal)
+					expect(Math.hypot(direction.x, direction.y, direction.z)).toBeCloseTo(
+						1,
+						5,
+					)
+					expect(
+						direction.x * normal.x +
+							direction.y * normal.y +
+							direction.z * normal.z,
+					).toBeGreaterThan(0)
+					return vec3f(1)
+				},
+			})
+			expect(calls).toBe(1)
+			expectColor(color, vec3f(1))
+		}
+	})
+
+	test('reads changes from the same live callback without rebuilding the shader', () => {
+		let brightness = 1
+		const shader = createShadeSurface({
+			lighting: createRaymarchConstantLighting({
+				ambient: vec3f(0),
+				directionalLights: [],
+			}),
+			environment: () => vec3f(brightness),
+		})
+		const sample = RaymarchSurfaceSample({
+			position: vec3f(0),
+			normal: vec3f(0, 0, 1),
+			material: RaymarchMaterial({
+				baseColor: vec3f(1),
+				metallic: 1,
+				roughness: 0.4,
+				emission: vec3f(0),
+			}),
+		})
+		const first = shader(vec3f(0, 0, 1), sample)
+		expect(first.x).toBeGreaterThan(0)
+		brightness = 2
+		const second = shader(vec3f(0, 0, 1), sample)
+		expectColor(second, vec3f(first.x * 2, first.y * 2, first.z * 2))
+	})
+})
 
 describe('direct material lighting', () => {
 	test('is black without illumination, but preserves emission', () => {

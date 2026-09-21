@@ -9,14 +9,17 @@ import { mix } from 'typegpu/std'
 export const RaymarchMaterial = struct({
 	/** Diffuse color for nonmetals, specular reflection color for metals. Each channel is in [0, 1]. */
 	baseColor: vec3f,
+
 	/** Nonmetal at 0, metal at 1; intermediate values blend the responses. Not a shininess control. */
 	metallic: f32,
+
 	/**
-	 * Surface roughness in [0, 1]: 0 produces sharp highlights, 1 broad highlights.
+	 * Surface roughness in [0, 1]: 0 produces sharp direct highlights, 1 broad ones.
 	 * Direct shading applies a small internal floor at the smooth end for stability.
-	 * Passed to the environment callback, which currently determines reflection filtering.
+	 * Passed to the environment callback; the consumer owns reflection filtering.
 	 */
 	roughness: f32,
+
 	/**
 	 * Nonnegative outgoing linear RGB added independently of illumination; may exceed 1.
 	 * Does not illuminate other surfaces or disable this material's reflections.

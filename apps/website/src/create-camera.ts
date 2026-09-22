@@ -4,6 +4,8 @@ import { mat4 } from 'wgpu-matrix'
 export interface CameraOptions {
 	position: v3f
 	target: v3f
+	/** Direction treated as vertical in the viewport. Defaults to positive Z. */
+	up?: v3f
 	/** Vertical field of view in radians. */
 	fieldOfView: number
 	near: number
@@ -16,6 +18,7 @@ export interface CameraOptions {
 export function createCamera({
 	position,
 	target,
+	up = vec3f(0, 0, 1),
 	fieldOfView,
 	near,
 	far,
@@ -23,7 +26,7 @@ export function createCamera({
 }: CameraOptions) {
 	const viewProjectionMatrix = mat4x4f()
 	const projectionMatrix = mat4.perspective(fieldOfView, aspectRatio, near, far)
-	const viewMatrix = mat4.lookAt(position, target, vec3f(0, 1, 0))
+	const viewMatrix = mat4.lookAt(position, target, up)
 	mat4.multiply(projectionMatrix, viewMatrix, viewProjectionMatrix)
 
 	return { cameraPosition: position, viewProjectionMatrix }

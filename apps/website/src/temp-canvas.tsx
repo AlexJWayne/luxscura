@@ -9,17 +9,18 @@ import {
 } from 'luxscura'
 import { useEffect, useRef } from 'preact/hooks'
 import { tgpu } from 'typegpu'
-import { mat4x4f, vec2f, vec3f } from 'typegpu/data'
+import { vec2f, vec3f } from 'typegpu/data'
 import { atan2, mix, sin, smoothstep } from 'typegpu/std'
-import { mat4 } from 'wgpu-matrix'
+import { createCamera } from './create-camera'
 
 const sphereProgram = createRaymarchProgram({ epsilon: 0.001 }, () => {
-	// Camera setup
-	const cameraPosition = vec3f(0, 0, 4)
-	const viewProjectionMatrix = mat4x4f()
-	const projectionMatrix = mat4.perspective(Math.PI / 4, 1, 0.1, 100)
-	const viewMatrix = mat4.lookAt(cameraPosition, vec3f(0, 0, 0), vec3f(0, 1, 0))
-	mat4.multiply(projectionMatrix, viewMatrix, viewProjectionMatrix)
+	const { cameraPosition, viewProjectionMatrix } = createCamera({
+		position: vec3f(0, 0, 4),
+		target: vec3f(0),
+		fieldOfView: Math.PI / 4,
+		near: 0.1,
+		far: 100,
+	})
 
 	// Return the raymarch program
 	return {

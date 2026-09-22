@@ -97,7 +97,10 @@ async function createSphereRenderer(canvas: HTMLCanvasElement) {
 	})
 
 	// render the scene
-	render({ view: context }, { view: depthTexture }, 1)
+	render({
+		colorAttachment: { view: context },
+		depthStencilAttachment: { view: depthTexture },
+	})
 
 	return {
 		destroy: () => root.destroy(),

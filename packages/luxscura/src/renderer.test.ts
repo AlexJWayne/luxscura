@@ -108,8 +108,8 @@ test('rebuilds all program callbacks with current options and the same setup con
 		},
 	})
 
-	render(colorAttachment, depthStencilAttachment, 2)
-	render(colorAttachment, depthStencilAttachment, 3)
+	render({ colorAttachment, depthStencilAttachment, instances: 2 })
+	render({ colorAttachment, depthStencilAttachment, instances: 3 })
 	expect(initialFactory).toHaveBeenCalledTimes(1)
 	expect(initialFactory).toHaveBeenCalledWith({ resource })
 	expect(preparedPrograms).toEqual([initialBody])
@@ -182,8 +182,8 @@ test('rebuilds all program callbacks with current options and the same setup con
 		updatedFactory,
 		hot,
 	)
-	render(colorAttachment, depthStencilAttachment, 4)
-	render(colorAttachment, depthStencilAttachment, 5)
+	render({ colorAttachment, depthStencilAttachment, instances: 4 })
+	render({ colorAttachment, depthStencilAttachment, instances: 5 })
 
 	expect(updatedFactory).toHaveBeenCalledTimes(1)
 	expect(updatedFactory.mock.calls[0]?.[0]).toEqual({ resource })

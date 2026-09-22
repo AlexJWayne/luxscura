@@ -60,6 +60,14 @@ export interface RaymarchRenderTargetOptions {
 	sampleCount?: 1 | 4
 }
 
+/** Attachments and instance count for one raymarch draw submission. */
+export interface RaymarchRenderOptions {
+	colorAttachment: ColorAttachment
+	depthStencilAttachment: DepthStencilAttachment
+	/** @default 1 */
+	instances?: number
+}
+
 const RayHit = struct({ isHit: bool, pos: vec3f, depth: f32 })
 type RayHit = Infer<typeof RayHit>
 
@@ -293,15 +301,15 @@ function createRaymarchPipeline({
 		}),
 	)
 
-	return function render(
-		colorAttachment: ColorAttachment,
-		depthStencilAttachment: DepthStencilAttachment,
-		instanceCount: number,
-	) {
+	return function render({
+		colorAttachment,
+		depthStencilAttachment,
+		instances = 1,
+	}: RaymarchRenderOptions) {
 		pipeline
 			.withColorAttachment({ color: colorAttachment })
 			.withDepthStencilAttachment(depthStencilAttachment)
-			.draw(cubeVertices.$.length, instanceCount)
+			.draw(cubeVertices.$.length, instances)
 	}
 }
 
@@ -369,11 +377,7 @@ export function createRaymarchRenderer<TContext = undefined>({
 	let activeVersion = program.version
 	let activeRenderer = createRenderer()
 
-	return function renderRaymarchedInstances(
-		colorAttachment: ColorAttachment,
-		depthStencilAttachment: DepthStencilAttachment,
-		instanceCount: number,
-	) {
+	return function renderRaymarchedInstances(options: RaymarchRenderOptions) {
 		if (activeVersion !== program.version) {
 			const nextRenderer = createRenderer()
 
@@ -381,6 +385,6 @@ export function createRaymarchRenderer<TContext = undefined>({
 			activeVersion = program.version
 		}
 
-		activeRenderer(colorAttachment, depthStencilAttachment, instanceCount)
+		activeRenderer(options)
 	}
 }

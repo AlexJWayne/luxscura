@@ -13,7 +13,7 @@ import { vec2f, vec3f } from 'typegpu/data'
 import { atan2, mix, sin, smoothstep } from 'typegpu/std'
 import { createCamera } from './create-camera'
 
-const sphereProgram = createRaymarchProgram({ epsilon: 0.001 }, () => {
+const demoAProgram = createRaymarchProgram({ epsilon: 0.001 }, () => {
 	const { cameraPosition, viewProjectionMatrix } = createCamera({
 		position: vec3f(0, 0, 4),
 		target: vec3f(0),
@@ -94,7 +94,7 @@ async function createSphereRenderer(canvas: HTMLCanvasElement) {
 
 	const render = createRaymarchRenderer({
 		root,
-		program: sphereProgram,
+		program: demoAProgram,
 	})
 
 	// render the scene

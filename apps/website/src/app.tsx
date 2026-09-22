@@ -1,4 +1,4 @@
-import { TempCanvas } from './temp-canvas'
+import { TempCanvas } from './demo-a'
 
 export function App() {
 	return (

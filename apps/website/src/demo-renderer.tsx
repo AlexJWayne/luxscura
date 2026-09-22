@@ -3,16 +3,23 @@ import {
 	type RaymarchProgramDefinition,
 } from 'luxscura'
 import { useEffect, useRef } from 'preact/hooks'
-import { tgpu } from 'typegpu'
+import { type TgpuUniform, tgpu } from 'typegpu'
+import { f32 } from 'typegpu/data'
 
-type DemoProgram = Readonly<RaymarchProgramDefinition<undefined>>
+export interface DemoContext {
+	elapsedTime: TgpuUniform<typeof f32>
+}
+
+type DemoProgram = Readonly<RaymarchProgramDefinition<DemoContext>>
 
 async function createDemoRenderer(
 	canvas: HTMLCanvasElement,
 	program: DemoProgram,
 ) {
 	const root = await tgpu.init()
-	const context = root.configureContext({ canvas })
+	const canvasContext = root.configureContext({ canvas })
+	const elapsedTime = root.createUniform(f32, 0)
+	const demoContext: DemoContext = { elapsedTime }
 
 	const depthTexture = root
 		.createTexture({
@@ -21,10 +28,16 @@ async function createDemoRenderer(
 		})
 		.$usage('render')
 
-	const raymarchRender = createRaymarchRenderer({ root, program })
-	const render = () => {
+	const raymarchRender = createRaymarchRenderer({
+		root,
+		program,
+		context: demoContext,
+	})
+	const startTime = performance.now()
+	const render = (timestamp: number) => {
+		elapsedTime.write((timestamp - startTime) / 1000)
 		raymarchRender({
-			colorAttachment: { view: context },
+			colorAttachment: { view: canvasContext },
 			depthStencilAttachment: { view: depthTexture },
 		})
 		requestAnimationFrame(render)

@@ -5,9 +5,13 @@ import tgpu, {
 	type TgpuRoot,
 } from 'typegpu'
 import { f32, mat4x4f, vec3f } from 'typegpu/data'
+import { fwidth } from 'typegpu/std'
 import { AABB } from './aabb'
-import { createRaymarchConstantLighting } from './lighting'
-import { RaymarchMaterial } from './material'
+import {
+	createPbrAppearance,
+	createRaymarchConstantLighting,
+	PbrMaterial,
+} from './appearances/pbr'
 import {
 	createRaymarchProgram,
 	type RaymarchHotContext,
@@ -51,13 +55,9 @@ test('rebuilds all program callbacks with current options and the same setup con
 			'use gpu'
 			return f32(0)
 		},
-		sample: () => {
-			'use gpu'
-			return RaymarchMaterial()
-		},
 	}
 	const initialBody: RaymarchProgram = {
-		...initialSurface,
+		surface: initialSurface,
 		camera: () => {
 			'use gpu'
 			return RaymarchCamera({
@@ -65,20 +65,31 @@ test('rebuilds all program callbacks with current options and the same setup con
 				viewProjectionMatrix: mat4x4f(),
 			})
 		},
-		lighting: createRaymarchConstantLighting({
-			ambient: vec3f(0.2),
-			directionalLights: [
-				{
-					direction: vec3f(0, -1, 0),
-					color: vec3f(22.25),
-					intensity: 1,
-				},
-			],
+		appearance: createPbrAppearance({
+			sampleMaterial: (result) => {
+				'use gpu'
+				return PbrMaterial({
+					baseColor: vec3f(fwidth(result.fragmentCoord.x)),
+					metallic: 0,
+					roughness: 1,
+					emission: vec3f(0),
+				})
+			},
+			lighting: createRaymarchConstantLighting({
+				ambient: vec3f(0.2),
+				directionalLights: [
+					{
+						direction: vec3f(0, -1, 0),
+						color: vec3f(22.25),
+						intensity: 1,
+					},
+				],
+			}),
+			environment: (_direction, _roughness) => {
+				'use gpu'
+				return vec3f(33.25)
+			},
 		}),
-		environment: (_direction, _roughness) => {
-			'use gpu'
-			return vec3f(33.25)
-		},
 	}
 	const initialFactory = mock(
 		(_context: { resource: typeof resource }) => initialBody,
@@ -93,16 +104,19 @@ test('rebuilds all program callbacks with current options and the same setup con
 		context: { resource },
 		prepare: (createdProgram) => {
 			preparedPrograms.push(createdProgram)
-			const environment = createdProgram.environment
+			const appearance = createdProgram.appearance
 			return {
 				...createdProgram,
-				isRayVisible: () => {
-					'use gpu'
-					return true
+				surface: {
+					...createdProgram.surface,
+					isRayVisible: () => {
+						'use gpu'
+						return true
+					},
 				},
-				environment: (direction, roughness) => {
+				appearance: (result) => {
 					'use gpu'
-					return environment(direction, roughness) + vec3f(77.25)
+					return appearance(result) + vec3f(77.25)
 				},
 			}
 		},
@@ -139,6 +153,7 @@ test('rebuilds all program callbacks with current options and the same setup con
 		}
 	}
 	const initialShader = resolvePipeline(0)
+	expect(initialShader).toContain('fwidth')
 	for (const value of ['11.25', '22.25', '33.25', '77.25']) {
 		expect(initialShader).toContain(value)
 	}
@@ -151,7 +166,7 @@ test('rebuilds all program callbacks with current options and the same setup con
 		},
 	}
 	const updatedBody: RaymarchProgram = {
-		...updatedSurface,
+		surface: updatedSurface,
 		camera: () => {
 			'use gpu'
 			return RaymarchCamera({
@@ -159,20 +174,26 @@ test('rebuilds all program callbacks with current options and the same setup con
 				viewProjectionMatrix: mat4x4f(),
 			})
 		},
-		lighting: createRaymarchConstantLighting({
-			ambient: vec3f(0.2),
-			directionalLights: [
-				{
-					direction: vec3f(0, -1, 0),
-					color: vec3f(55.25),
-					intensity: 1,
-				},
-			],
+		appearance: createPbrAppearance({
+			sampleMaterial: () => {
+				'use gpu'
+				return PbrMaterial()
+			},
+			lighting: createRaymarchConstantLighting({
+				ambient: vec3f(0.2),
+				directionalLights: [
+					{
+						direction: vec3f(0, -1, 0),
+						color: vec3f(55.25),
+						intensity: 1,
+					},
+				],
+			}),
+			environment: () => {
+				'use gpu'
+				return vec3f(66.25)
+			},
 		}),
-		environment: () => {
-			'use gpu'
-			return vec3f(66.25)
-		},
 	}
 	const updatedFactory = mock(
 		(_context: { resource: typeof resource }) => updatedBody,
@@ -199,5 +220,75 @@ test('rebuilds all program callbacks with current options and the same setup con
 	}
 	for (const value of ['11.25', '22.25', '33.25']) {
 		expect(updatedShader).not.toContain(value)
+	}
+})
+
+test('compiles a custom appearance with screen-space derivatives', () => {
+	let descriptor: Parameters<TgpuRoot['createRenderPipeline']>[0] | undefined
+	const pipeline = {
+		withPerformanceCallback() {
+			return this
+		},
+		withColorAttachment() {
+			return this
+		},
+		withDepthStencilAttachment() {
+			return this
+		},
+		draw() {},
+	}
+	const root = {
+		createRenderPipeline(nextDescriptor: typeof descriptor) {
+			descriptor = nextDescriptor
+			return pipeline
+		},
+	} as unknown as TgpuRoot
+	const program = createRaymarchProgram({ epsilon: 0.01 }, () => ({
+		camera: () => {
+			'use gpu'
+			return RaymarchCamera({
+				position: vec3f(0, 0, -3),
+				viewProjectionMatrix: mat4x4f(),
+			})
+		},
+		surface: {
+			bounds: () => {
+				'use gpu'
+				return AABB({ min: vec3f(-1), max: vec3f(1) })
+			},
+			sd: (position) => {
+				'use gpu'
+				return position.z
+			},
+		},
+		appearance: (result) => {
+			'use gpu'
+			return vec3f(
+				fwidth(result.fragmentCoord.x),
+				f32(result.stepCount),
+				result.rayDistance,
+			)
+		},
+	}))
+	createRaymarchRenderer({ root, program })
+	if (!descriptor) throw new Error('Expected a render pipeline descriptor')
+
+	const previousUsage = Object.getOwnPropertyDescriptor(
+		globalThis,
+		'GPUBufferUsage',
+	)
+	Object.defineProperty(globalThis, 'GPUBufferUsage', {
+		configurable: true,
+		value: { COPY_SRC: 4, COPY_DST: 8, STORAGE: 128 },
+	})
+	try {
+		const shaderRoot = tgpu.initFromDevice({ device: {} as GPUDevice })
+		const shader = tgpu.resolve([shaderRoot.createRenderPipeline(descriptor)])
+		expect(shader).toContain('fwidth')
+		expect(shader).toContain('@builtin(position)')
+	} finally {
+		if (previousUsage)
+			Object.defineProperty(globalThis, 'GPUBufferUsage', previousUsage)
+		else Reflect.deleteProperty(globalThis, 'GPUBufferUsage')
 	}
 })

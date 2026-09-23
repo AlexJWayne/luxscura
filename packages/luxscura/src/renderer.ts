@@ -23,14 +23,14 @@ import {
 import { discard, length, min, normalize } from 'typegpu/std'
 import { type AABB, aabbExitDistance, aabbPoint } from './aabb'
 import { cubeVertices } from './cube-vertices'
-import { createShadeSurface, type RaymarchLighting } from './lighting'
 import {
+	type RaymarchAppearance,
 	type RaymarchDistanceFunction,
 	type RaymarchProgram,
 	type RaymarchProgramDefinition,
 	type RaymarchProgramOptions,
+	RaymarchResult,
 	type RaymarchSurface,
-	RaymarchSurfaceSample,
 	type RaymarchVisibilityTest,
 } from './program'
 
@@ -68,7 +68,14 @@ export interface RaymarchRenderOptions {
 	instances?: number
 }
 
-const RayHit = struct({ isHit: bool, pos: vec3f, depth: f32 })
+const RayHit = struct({
+	isHit: bool,
+	pos: vec3f,
+	depth: f32,
+	rayDirection: vec3f,
+	rayDistance: f32,
+	stepCount: u32,
+})
 type RayHit = Infer<typeof RayHit>
 
 function createRaymarch({
@@ -97,6 +104,7 @@ function createRaymarch({
 
 		let marchedDistance = f32(0)
 		let point = camera.position + rayDirection * triangleDistance
+		let stepCount = u32(0)
 
 		let marchLimit = aabbExitDistance(aabb, point, rayDirection)
 		if (marchBeyondBounds) {
@@ -107,6 +115,7 @@ function createRaymarch({
 
 		for (let stepIndex = 0; stepIndex < maxSteps; stepIndex++) {
 			if (marchedDistance > marchLimit) break
+			stepCount += 1
 
 			point =
 				camera.position + rayDirection * (triangleDistance + marchedDistance)
@@ -120,6 +129,9 @@ function createRaymarch({
 					isHit: true,
 					pos: point,
 					depth: hitClipPosition.z / hitClipPosition.w,
+					rayDirection,
+					rayDistance: triangleDistance + marchedDistance,
+					stepCount,
 				})
 			}
 			marchedDistance += distance
@@ -127,8 +139,11 @@ function createRaymarch({
 
 		return RayHit({
 			isHit: false,
-			pos: vec3f(),
+			pos: point,
 			depth: 1,
+			rayDirection,
+			rayDistance: length(point - camera.position),
+			stepCount,
 		})
 	}
 }
@@ -167,8 +182,7 @@ function createRaymarchPipeline({
 	root,
 	options,
 	camera,
-	lighting,
-	environment,
+	appearance,
 	surface,
 	preparePipeline = (pipeline) => pipeline,
 	renderTarget,
@@ -176,19 +190,13 @@ function createRaymarchPipeline({
 	root: TgpuRoot
 	options: RaymarchProgramOptions
 	camera: () => RaymarchCamera
-	lighting: () => RaymarchLighting
-	environment: (direction: v3f, roughness: number) => v3f
+	appearance: RaymarchAppearance
 	surface: RaymarchSurface
 	preparePipeline?: (
 		pipeline: TgpuRenderPipeline<{ color: Vec4f }>,
 	) => TgpuRenderPipeline<{ color: Vec4f }>
 	renderTarget?: Readonly<RaymarchRenderTargetOptions>
 }) {
-	const shadeSurface = createShadeSurface({
-		lighting,
-		environment,
-	})
-
 	const isRayVisible: RaymarchVisibilityTest =
 		surface.isRayVisible ??
 		(() => {
@@ -261,32 +269,39 @@ function createRaymarchPipeline({
 				}
 			}),
 
-			fragment: ({ worldPos, instanceIdx }) => {
+			fragment: ({ $position, worldPos, instanceIdx }) => {
 				'use gpu'
 
 				const aabb = surface.bounds(instanceIdx)
 				if (surface.init !== undefined) surface.init(instanceIdx)
 				if (!isRayVisible(worldPos.xyz, instanceIdx, aabb)) discard()
 
-				const hit = raymarch(camera(), worldPos.xyz, aabb, instanceIdx)
-				let normal = vec3f()
+				const activeCamera = camera()
+				const hit = raymarch(activeCamera, worldPos.xyz, aabb, instanceIdx)
+				let normal = -1 * hit.rayDirection
 
 				if (hit.isHit) {
 					normal = calculateNormal(hit.pos, aabb, instanceIdx)
 				}
 
-				// Keep material sampling in uniform control flow so surfaces may use
-				// screen-space derivatives such as fwidth.
-				const material = surface.sample(hit.pos, instanceIdx, aabb)
-
-				if (hit.isHit) {
-					const sample = RaymarchSurfaceSample({
+				// Appearance runs before the hit branch so it may use derivatives.
+				const color = appearance(
+					RaymarchResult({
+						isHit: hit.isHit,
 						position: hit.pos,
 						normal,
-						material,
-					})
-					const color = shadeSurface(camera().position, sample)
+						rayOrigin: activeCamera.position,
+						rayDirection: hit.rayDirection,
+						rayDistance: hit.rayDistance,
+						stepCount: hit.stepCount,
+						projectedDepth: hit.depth,
+						fragmentCoord: $position.xy,
+						instanceIndex: instanceIdx,
+						bounds: aabb,
+					}),
+				)
 
+				if (hit.isHit) {
 					return {
 						color: vec4f(color, 1),
 						$fragDepth: hit.depth,
@@ -315,7 +330,7 @@ function createRaymarchPipeline({
 
 /**
  * Creates a renderer for a raymarch program. It adds bounds rendering,
- * raymarching, normal calculation, lighting, depth, and draw submission to the
+ * raymarching, normal calculation, appearance, depth, and draw submission to the
  * surface supplied by the program.
  *
  * Program creation and preparation are repeated when the program version
@@ -357,16 +372,13 @@ export function createRaymarchRenderer<TContext = undefined>({
 	? { context?: TContext }
 	: { context: TContext })) {
 	function createRenderer() {
-		const { camera, lighting, environment, ...surface } = prepare(
-			program.create(context),
-		)
+		const { camera, surface, appearance } = prepare(program.create(context))
 		const renderer = createRaymarchPipeline({
 			root,
 			options: program.options,
 			surface,
 			camera,
-			lighting,
-			environment,
+			appearance,
 			preparePipeline,
 			renderTarget,
 		})

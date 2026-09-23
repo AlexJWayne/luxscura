@@ -1,15 +1,49 @@
-import { type Infer, struct, type v3f, vec3f } from 'typegpu/data'
-import type { AABB } from './aabb'
-import type { RaymarchLighting } from './lighting'
-import { RaymarchMaterial } from './material'
+import {
+	bool,
+	f32,
+	type Infer,
+	struct,
+	u32,
+	type v3f,
+	vec2f,
+	vec3f,
+} from 'typegpu/data'
+import { AABB } from './aabb'
 import type { RaymarchCamera } from './renderer'
 
-export const RaymarchSurfaceSample = struct({
+/** Result of the primary ray march, with data available for appearance. */
+export const RaymarchResult = struct({
+	/** Whether the primary ray reached the surface within the march limits. */
+	isHit: bool,
+	/** Hit position, or the final ray sample position on a miss, in world space. */
 	position: vec3f,
+	/** Outward surface normal on a hit; -rayDirection on a miss. */
 	normal: vec3f,
-	material: RaymarchMaterial,
+	/** Camera position in world space. */
+	rayOrigin: vec3f,
+	/** Unit direction from the camera into the scene. */
+	rayDirection: vec3f,
+	/** World-space distance from rayOrigin to position. */
+	rayDistance: f32,
+	/** Number of primary ray-march iterations, excluding normal/shadow samples. */
+	stepCount: u32,
+	/** Projected depth written for a hit; 1 on a miss. */
+	projectedDepth: f32,
+	/** Pixel-space fragment coordinates, with pixel centers at half-integers. */
+	fragmentCoord: vec2f,
+	/** Index of the bounds instance being rendered. */
+	instanceIndex: u32,
+	/** World-space bounds for this instance. */
+	bounds: AABB,
 })
-export type RaymarchSurfaceSample = Infer<typeof RaymarchSurfaceSample>
+export type RaymarchResult = Infer<typeof RaymarchResult>
+
+/**
+ * GPU function calculating linear RGB for every visible fragment after marching.
+ * The renderer uses the result only on hits, with opaque coverage and its own
+ * depth. Derivative-dependent work must run outside hit-dependent branches.
+ */
+export type RaymarchAppearance = (result: RaymarchResult) => v3f
 
 export type RaymarchBoundsProvider = (instanceIdx: number) => AABB
 
@@ -26,12 +60,6 @@ export type RaymarchDistanceFunction = (
 	instanceIdx: number,
 	aabb: AABB,
 ) => number
-
-export type RaymarchMaterialSampler = (
-	point: v3f,
-	instanceIdx: number,
-	aabb: AABB,
-) => RaymarchMaterial
 
 export type RaymarchProgramOptions = {
 	/** Diagnostic metadata for consumers. Unused by the renderer. */
@@ -61,8 +89,8 @@ export type RaymarchProgramOptions = {
 	  }
 )
 
-/** Flat shader definition compiled into a raymarching pipeline. */
-export interface RaymarchProgram {
+/** Geometry and visibility callbacks compiled into a raymarching pipeline. */
+export interface RaymarchSurface {
 	/** GPU function initializing per-fragment state before raymarching. */
 	init?: RaymarchInitializer
 
@@ -77,30 +105,19 @@ export interface RaymarchProgram {
 
 	/** GPU function returning the signed distance from a point to the surface. */
 	sd: RaymarchDistanceFunction
+}
 
-	/** GPU function returning the material at a point on the surface. */
-	sample: RaymarchMaterialSampler
-
+/** Camera, geometry, and appearance compiled into one raymarching pipeline. */
+export interface RaymarchProgram {
 	/** GPU function providing the current camera state. */
 	camera: () => RaymarchCamera
 
-	/** GPU function providing the current lighting state. */
-	lighting: () => RaymarchLighting
+	/** Surface bounds, signed distance, and optional visibility behavior. */
+	surface: RaymarchSurface
 
-	/**
-	 * GPU function returning incoming light from a normalized world-space direction
-	 * pointing from the surface toward the environment. Returns nonnegative linear
-	 * RGB lighting, which may exceed 1. Called once per surface hit at the mirror
-	 * reflection direction, with material roughness in [0, 1]. The consumer owns any
-	 * roughness-dependent filtering; ignoring roughness produces sharp reflections.
-	 */
-	environment: (direction: v3f, roughness: number) => v3f
+	/** GPU function returning linear RGB for the raymarch result. */
+	appearance: RaymarchAppearance
 }
-
-export type RaymarchSurface = Pick<
-	RaymarchProgram,
-	'init' | 'bounds' | 'isRayVisible' | 'sd' | 'sample'
->
 
 /** Versioned factory that creates a program from setup-time context. */
 export interface RaymarchProgramDefinition<TContext> {
@@ -118,7 +135,7 @@ const HOT_DATA_KEY = 'raymarchProgramDefinition'
 
 /**
  * Creates a versioned program definition without allocating GPU resources. It
- * owns the factory for surface, camera, lighting, and environment callbacks,
+ * owns the factory for surface, camera, and appearance callbacks,
  * and the options used to compile them into a raymarching pipeline. Callbacks
  * may read changing buffer data without rebuilding the pipeline.
  *

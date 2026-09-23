@@ -9,8 +9,59 @@ import {
 	reflect,
 	sqrt,
 } from 'typegpu/std'
-import type { RaymarchMaterial } from './material'
-import type { RaymarchSurfaceSample } from './program'
+import type { RaymarchAppearance, RaymarchResult } from '../program'
+
+/**
+ * GPU material schema for an opaque surface using metallic/roughness shading.
+ * Colors are linear RGB. Callers must supply finite values within the documented
+ * ranges; constructing this struct does not clamp or validate material values.
+ */
+export const PbrMaterial = struct({
+	/** Diffuse color for nonmetals, specular reflection color for metals. Each channel is in [0, 1]. */
+	baseColor: vec3f,
+
+	/** Nonmetal at 0, metal at 1; intermediate values blend the responses. Not a shininess control. */
+	metallic: f32,
+
+	/**
+	 * Surface roughness in [0, 1]: 0 produces sharp direct highlights, 1 broad ones.
+	 * Direct shading applies a small internal floor at the smooth end for stability.
+	 * Passed to the environment callback; the consumer owns reflection filtering.
+	 */
+	roughness: f32,
+
+	/**
+	 * Nonnegative outgoing linear RGB added independently of illumination; may exceed 1.
+	 * Does not illuminate other surfaces or disable this material's reflections.
+	 */
+	emission: vec3f,
+})
+export type PbrMaterial = Infer<typeof PbrMaterial>
+
+/** Debug material for visualizing a normalized float That varies over the surface. */
+export function debugPbrMaterial(luminance: number): PbrMaterial {
+	'use gpu'
+	return PbrMaterial({
+		baseColor: vec3f(0),
+		metallic: f32(0),
+		roughness: f32(1),
+		emission: vec3f(luminance),
+	})
+}
+
+export function mixPbrMaterials(
+	a: PbrMaterial,
+	b: PbrMaterial,
+	amount: number,
+): PbrMaterial {
+	'use gpu'
+	return PbrMaterial({
+		baseColor: mix(a.baseColor, b.baseColor, amount),
+		metallic: mix(a.metallic, b.metallic, amount),
+		roughness: mix(a.roughness, b.roughness, amount),
+		emission: mix(a.emission, b.emission, amount),
+	})
+}
 
 /** GPU schema for a directional light contributing diffuse and specular illumination. */
 export const RaymarchDirectionalLight = struct({
@@ -79,6 +130,14 @@ export function createRaymarchConstantLighting(lighting: RaymarchLighting) {
 		})
 	}
 }
+
+/** Position, normal, and PBR material consumed by the lighting calculation. */
+export const PbrSurfaceSample = struct({
+	position: vec3f,
+	normal: vec3f,
+	material: PbrMaterial,
+})
+export type PbrSurfaceSample = Infer<typeof PbrSurfaceSample>
 
 /** Schlick Fresnel approximation; cosTheta is the incident angle's cosine in [0, 1]. */
 function fresnelSchlick(cosTheta: number, specularF0: v3f): v3f {
@@ -167,7 +226,7 @@ function evaluateDirectLightResponse(
  * Creates a GPU surface shader combining direct lighting, material emission,
  * and environment reflections.
  */
-export function createShadeSurface({
+export function createPbrShadeSurface({
 	lighting,
 	environment,
 }: {
@@ -177,7 +236,7 @@ export function createShadeSurface({
 	function calculateDirectLighting(
 		viewDirection: v3f,
 		normal: v3f,
-		material: RaymarchMaterial,
+		material: PbrMaterial,
 		specularF0: v3f,
 	): v3f {
 		'use gpu'
@@ -228,7 +287,7 @@ export function createShadeSurface({
 
 	return function shadeSurface(
 		cameraPosition: v3f,
-		sample: RaymarchSurfaceSample,
+		sample: PbrSurfaceSample,
 	): v3f {
 		'use gpu'
 
@@ -253,5 +312,46 @@ export function createShadeSurface({
 		)
 
 		return directLighting + material.emission + reflection
+	}
+}
+
+/** GPU function sampling a PBR material from the raymarch result. */
+export type PbrMaterialSampler = (result: RaymarchResult) => PbrMaterial
+
+/**
+ * Creates a metallic/roughness appearance for a raymarch program.
+ *
+ * Material sampling runs for hits and misses so derivatives remain available.
+ * Lighting runs only for hits. The returned color on a miss is ignored by the
+ * renderer.
+ */
+export function createPbrAppearance({
+	sampleMaterial,
+	lighting,
+	environment,
+}: {
+	sampleMaterial: PbrMaterialSampler
+	lighting: () => RaymarchLighting
+	/**
+	 * Incoming linear RGB from a normalized reflection direction. Called only on
+	 * hits; texture sampling here should use an explicit level of detail.
+	 */
+	environment: (direction: v3f, roughness: number) => v3f
+}): RaymarchAppearance {
+	const shadeSurface = createPbrShadeSurface({ lighting, environment })
+
+	return function pbrAppearance(result: RaymarchResult): v3f {
+		'use gpu'
+		const material = sampleMaterial(result)
+		if (!result.isHit) return vec3f(0)
+
+		return shadeSurface(
+			result.rayOrigin,
+			PbrSurfaceSample({
+				position: result.position,
+				normal: result.normal,
+				material,
+			}),
+		)
 	}
 }

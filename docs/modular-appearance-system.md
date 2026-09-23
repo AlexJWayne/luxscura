@@ -1,10 +1,11 @@
 # Modular Appearance System
 
 > [!NOTE]
-> This document records an idea worth exploring. It is not a proposed final
-> interface, an implementation plan, or a commitment to any particular set of
-> lighting or appearance models. The names and TypeScript examples below are
-> illustrative only.
+> This document records the original design exploration. The current interface
+> is implemented as `camera`, `surface`, and one `appearance` function. Luxscura
+> ships a PBR appearance factory and accepts custom appearance functions. See
+> the [package README](../packages/luxscura/README.md) for the current contract;
+> the examples and open questions below are historical design notes.
 
 ## Motivation
 
@@ -57,7 +58,7 @@ A ray-marching program could conceptually compose three modules:
 - **Camera**: information used to construct rays and project hit depth.
 - **Surface**: bounds, the signed distance function, visibility, and any
   per-fragment initialization needed to find a hit.
-- **Appearance**: a TypeGPU function that turns the hit context into color.
+- **Appearance**: a TypeGPU function that turns the raymarch result into color.
 
 Illustrative only:
 
@@ -76,7 +77,7 @@ interface RaymarchSurface {
 }
 
 type RaymarchAppearance = (
-  context: RaymarchAppearanceContext,
+  result: RaymarchResult,
 ) => v3f
 ```
 
@@ -132,19 +133,19 @@ require every appearance to produce that structure.
 An appearance factory may internally separate material sampling from lighting,
 and it may define a material type specific to that implementation. Those
 details can remain inside the appearance module. A custom appearance could
-skip the material abstraction and calculate color directly from the hit context
+skip the material abstraction and calculate color directly from the raymarch result
 and any TypeGPU resources captured by its function.
 
 ## Custom appearances
 
 Consumers should be able to supply the same kind of TypeGPU function returned
-by a built-in appearance factory. It would receive the same rendering context
+by a built-in appearance factory. It would receive the same raymarch result
 available to built-in appearances and return the color for the hit.
 
 Illustrative only:
 
 ```ts
-const normalVisualization = ({ normal }: RaymarchAppearanceContext) => {
+const normalVisualization = ({ normal }: RaymarchResult) => {
   'use gpu'
   return normal * 0.5 + 0.5
 }
@@ -197,7 +198,7 @@ This direction is promising if it can provide the following:
 
 ## Open questions
 
-- What is the smallest useful appearance context?
+- What is the smallest useful raymarch result?
 - Should the context contain camera position, view direction, or the complete
   camera value?
 - Do instance index and bounds belong in the common context, or should

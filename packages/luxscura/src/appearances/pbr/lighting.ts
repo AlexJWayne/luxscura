@@ -13,7 +13,7 @@ export const RaymarchDirectionalLight = struct({
 })
 
 /** Directional-light values accepted by lighting providers. */
-export type RaymarchLight = Infer<typeof RaymarchDirectionalLight>
+export type RaymarchDirectionalLight = Infer<typeof RaymarchDirectionalLight>
 
 const fallbackDirectionalLights = [
 	RaymarchDirectionalLight({

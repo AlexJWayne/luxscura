@@ -1,3 +1,8 @@
-export * from './appearance'
-export * from './lighting'
-export * from './material'
+export { createPbrAppearance } from './appearance'
+export {
+	createRaymarchConstantLighting,
+	createRaymarchLightingStruct,
+	RaymarchDirectionalLight,
+	type RaymarchLighting,
+} from './lighting'
+export { PbrMaterial } from './material'

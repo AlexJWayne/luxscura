@@ -2,6 +2,7 @@ import {
 	bool,
 	f32,
 	type Infer,
+	mat4x4f,
 	struct,
 	u32,
 	type v3f,
@@ -9,7 +10,12 @@ import {
 	vec3f,
 } from 'typegpu/data'
 import { AABB } from './aabb'
-import type { RaymarchCamera } from './renderer'
+
+export const RaymarchCamera = struct({
+	viewProjectionMatrix: mat4x4f,
+	position: vec3f,
+})
+export type RaymarchCamera = Infer<typeof RaymarchCamera>
 
 /** Result of the primary ray march, with data available for appearance. */
 export const RaymarchResult = struct({

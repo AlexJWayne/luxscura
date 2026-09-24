@@ -14,11 +14,12 @@ import {
 } from './appearances/pbr'
 import {
 	createRaymarchProgram,
+	RaymarchCamera,
 	type RaymarchHotContext,
 	type RaymarchProgram,
 	type RaymarchSurface,
 } from './program'
-import { createRaymarchRenderer, RaymarchCamera } from './renderer'
+import { createRaymarchRenderer } from './renderer'
 
 test('rebuilds all program callbacks with current options and the same setup context', () => {
 	const draw = mock((_vertexCount: number, _instanceCount: number) => {})

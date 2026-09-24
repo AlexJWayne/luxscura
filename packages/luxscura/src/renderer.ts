@@ -11,7 +11,6 @@ import {
 	f32,
 	type Infer,
 	interpolate,
-	mat4x4f,
 	struct,
 	u32,
 	type Vec4f,
@@ -25,6 +24,7 @@ import { type AABB, aabbExitDistance, aabbPoint } from './aabb'
 import { cubeVertices } from './cube-vertices'
 import {
 	type RaymarchAppearance,
+	type RaymarchCamera,
 	type RaymarchDistanceFunction,
 	type RaymarchProgram,
 	type RaymarchProgramDefinition,
@@ -33,12 +33,6 @@ import {
 	type RaymarchSurface,
 	type RaymarchVisibilityTest,
 } from './program'
-
-export const RaymarchCamera = struct({
-	viewProjectionMatrix: mat4x4f,
-	position: vec3f,
-})
-export type RaymarchCamera = Infer<typeof RaymarchCamera>
 
 export interface RaymarchRenderTargetOptions {
 	/**

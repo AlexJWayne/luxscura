@@ -7,11 +7,23 @@ import { defineConfig } from 'vite'
 export default defineConfig({
 	plugins: [typegpuPlugin(), preact(), tailwindcss()],
 	resolve: {
-		alias: {
-			luxscura: fileURLToPath(
-				new URL('../../packages/luxscura/src/index.ts', import.meta.url),
-			),
-		},
+		alias: [
+			{
+				find: /^luxscura$/,
+				replacement: fileURLToPath(
+					new URL('../../packages/luxscura/src/index.ts', import.meta.url),
+				),
+			},
+			{
+				find: /^luxscura\/pbr$/,
+				replacement: fileURLToPath(
+					new URL(
+						'../../packages/luxscura/src/appearances/pbr/index.ts',
+						import.meta.url,
+					),
+				),
+			},
+		],
 		dedupe: ['typegpu'],
 	},
 })

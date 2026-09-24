@@ -12,7 +12,8 @@
 		"module": "ESNext",
 		"moduleResolution": "Bundler",
 		"paths": {
-			"luxscura": ["../../packages/luxscura/src/index.ts"]
+			"luxscura": ["../../packages/luxscura/src/index.ts"],
+			"luxscura/pbr": ["../../packages/luxscura/src/appearances/pbr/index.ts"]
 		},
 		"resolveJsonModule": true,
 		"isolatedModules": true,

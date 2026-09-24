@@ -1,12 +1,10 @@
 import { opSmoothUnion, sdBox3d, sdSphere } from '@typegpu/sdf'
+import { AABB, createRaymarchProgram, RaymarchCamera } from 'luxscura'
 import {
-	AABB,
 	createPbrAppearance,
 	createRaymarchConstantLighting,
-	createRaymarchProgram,
 	PbrMaterial,
-	RaymarchCamera,
-} from 'luxscura'
+} from 'luxscura/pbr'
 import { type v3f, vec3f } from 'typegpu/data'
 import { atan2, cos, mix, sin, smoothstep } from 'typegpu/std'
 import { createCamera } from '../create-camera'

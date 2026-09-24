@@ -1,5 +1,4 @@
 export * from './aabb'
-export * from './appearances/pbr'
 export * from './cube-vertices'
 export * from './program'
 export * from './renderer'

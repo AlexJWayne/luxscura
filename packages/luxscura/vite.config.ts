@@ -5,9 +5,11 @@ export default defineConfig({
 	plugins: [typegpuPlugin()],
 	build: {
 		lib: {
-			entry: 'src/index.ts',
+			entry: {
+				index: 'src/index.ts',
+				pbr: 'src/appearances/pbr/index.ts',
+			},
 			formats: ['es'],
-			fileName: 'index',
 		},
 		sourcemap: true,
 		emptyOutDir: true,

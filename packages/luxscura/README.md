@@ -12,6 +12,16 @@ JavaScript or TypeScript must also configure `unplugin-typegpu` for their build
 tool. Luxscura itself ships pre-transformed JavaScript and does not require a
 particular consumer bundler.
 
+## Appearances
+
+The core renderer is available from `luxscura`. Optional PBR shading is available
+from `luxscura/pbr`:
+
+```ts
+import { createRaymarchProgram, createRaymarchRenderer } from 'luxscura'
+import { createPbrAppearance, PbrMaterial } from 'luxscura/pbr'
+```
+
 ## Development
 
 Install dependencies and build the package:

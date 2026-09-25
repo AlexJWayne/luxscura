@@ -49,7 +49,7 @@ export const programA = createRaymarchProgram<DemoContext>(
 				},
 			},
 			appearance: createPbrAppearance({
-				sampleMaterial: () => {
+				material: () => {
 					'use gpu'
 					return PbrMaterial({
 						baseColor: vec3f(0.12, 0.45, 0.9),

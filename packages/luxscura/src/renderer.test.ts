@@ -67,7 +67,7 @@ test('rebuilds all program callbacks with current options and the same setup con
 			})
 		},
 		appearance: createPbrAppearance({
-			sampleMaterial: (result) => {
+			material: (result) => {
 				'use gpu'
 				return PbrMaterial({
 					baseColor: vec3f(fwidth(result.fragmentCoord.x)),
@@ -176,7 +176,7 @@ test('rebuilds all program callbacks with current options and the same setup con
 			})
 		},
 		appearance: createPbrAppearance({
-			sampleMaterial: () => {
+			material: () => {
 				'use gpu'
 				return PbrMaterial()
 			},

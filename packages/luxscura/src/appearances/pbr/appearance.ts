@@ -208,11 +208,11 @@ export type PbrMaterialSampler = (result: RaymarchResult) => PbrMaterial
  * renderer.
  */
 export function createPbrAppearance({
-	sampleMaterial,
+	material,
 	lighting,
 	environment,
 }: {
-	sampleMaterial: PbrMaterialSampler
+	material: PbrMaterialSampler
 	lighting: () => RaymarchLighting
 	/**
 	 * Incoming linear RGB from a normalized reflection direction. Called only on
@@ -224,7 +224,7 @@ export function createPbrAppearance({
 
 	return function pbrAppearance(result: RaymarchResult): v3f {
 		'use gpu'
-		const material = sampleMaterial(result)
+		const materialSample = material(result)
 		if (!result.isHit) return vec3f(0)
 
 		return shadeSurface(
@@ -232,7 +232,7 @@ export function createPbrAppearance({
 			PbrSurfaceSample({
 				position: result.position,
 				normal: result.normal,
-				material,
+				material: materialSample,
 			}),
 		)
 	}

@@ -1,4 +1,4 @@
-export { createPbrAppearance } from './appearance'
+export { createPbrAppearance, type PbrMaterialSampler } from './appearance'
 export {
 	createRaymarchConstantLighting,
 	createRaymarchLightingStruct,

@@ -5,4 +5,4 @@ export {
 	RaymarchDirectionalLight,
 	type RaymarchLighting,
 } from './lighting'
-export { PbrMaterial } from './material'
+export { mixPbrMaterials, PbrMaterial } from './material'

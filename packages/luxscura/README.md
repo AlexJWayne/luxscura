@@ -57,6 +57,38 @@ Ambient fill and directional light contributions are multiplied by that color;
 all colors are linear RGB. Matte uses Lambert diffuse lighting and does not
 require an environment callback.
 
+For adjustable shiny highlights, use `luxscura/glossy`:
+
+```ts
+import { createGlossyAppearance, GlossyMaterial } from 'luxscura/glossy'
+
+const glossyAppearance = createGlossyAppearance({
+  material: () => {
+    'use gpu'
+    return GlossyMaterial({
+      baseColor: vec3f(0.15, 0.5, 0.85),
+      specular: vec3f(0.8),
+      shininess: 64,
+      emission: vec3f(0),
+    })
+  },
+  lighting: createRaymarchConstantLighting({
+    ambient: vec3f(0.08, 0.12, 0.2),
+    directionalLights: [{
+      direction: vec3f(-1, 1, -1),
+      color: vec3f(1, 0.9, 0.75),
+      intensity: 0.8,
+    }],
+  }),
+})
+```
+
+Glossy uses Blinn-Phong lighting. `baseColor` controls the diffuse color, while
+`specular` controls highlight color and strength; black disables highlights.
+`shininess` controls highlight tightness: lower values produce broad highlights,
+and higher values produce small ones. `emission` adds color independently of the
+lights. Like Matte, Glossy uses shared lighting and needs no environment callback.
+
 ## Development
 
 Install dependencies and build the package:

@@ -1,9 +1,10 @@
 # Standalone demos
 
 Each demo is a complete TypeScript file. Copy `hello.ts` for a minimal sphere,
-`matte.ts` for a colored sphere with directional lighting and ambient fill, or
-`logo.ts` for an animated scene with PBR lighting. The demos do not depend on
-Preact or other files in this repository.
+`matte.ts` for a colored sphere with directional lighting and ambient fill,
+`glossy.ts` for the same sphere with a shiny highlight, or `logo.ts` for an animated
+scene with PBR lighting. The demos do not depend on Preact or other files in this
+repository.
 
 Install the runtime dependencies:
 

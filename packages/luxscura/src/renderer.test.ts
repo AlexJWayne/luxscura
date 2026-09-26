@@ -7,11 +7,8 @@ import tgpu, {
 import { f32, mat4x4f, vec3f } from 'typegpu/data'
 import { fwidth } from 'typegpu/std'
 import { AABB } from './aabb'
-import {
-	createPbrAppearance,
-	createRaymarchConstantLighting,
-	PbrMaterial,
-} from './appearances/pbr'
+import { createPbrAppearance, PbrMaterial } from './appearances/pbr'
+import { createRaymarchConstantLighting } from './index'
 import {
 	createRaymarchProgram,
 	RaymarchCamera,

@@ -14,13 +14,20 @@ particular consumer bundler.
 
 ## Appearances
 
-The core renderer is available from `luxscura`. Optional PBR shading is available
-from `luxscura/pbr`:
+The core renderer and shared lighting helpers are available from `luxscura`.
+Optional PBR shading is available from `luxscura/pbr`:
 
 ```ts
-import { createRaymarchProgram, createRaymarchRenderer } from 'luxscura'
+import {
+  createRaymarchConstantLighting,
+  createRaymarchProgram,
+  createRaymarchRenderer,
+} from 'luxscura'
 import { createPbrAppearance, PbrMaterial } from 'luxscura/pbr'
 ```
+
+Import shared lighting helpers and types from `luxscura`; appearance entry points
+export only their appearance-specific APIs.
 
 ## Development
 

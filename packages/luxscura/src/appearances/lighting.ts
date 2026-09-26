@@ -1,6 +1,6 @@
 import { arrayOf, f32, type Infer, struct, vec3f } from 'typegpu/data'
 
-/** GPU schema for a directional light contributing diffuse and specular illumination. */
+/** Shared GPU schema for a directional light used by lit appearances. */
 export const RaymarchDirectionalLight = struct({
 	/** Nonzero world-space direction of travel; normalized during shading. */
 	direction: vec3f,
@@ -27,7 +27,7 @@ const fallbackDirectionalLights = [
  * Creates a GPU lighting schema with a fixed number of light slots.
  * @throws {RangeError} If capacity is not a positive integer.
  */
-export function createRaymarchLightingStruct(capacity: number) {
+function createRaymarchLightingStruct(capacity: number) {
 	if (!Number.isInteger(capacity) || capacity < 1) {
 		throw new RangeError('Lighting capacity must be a positive integer.')
 	}

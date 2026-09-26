@@ -1,5 +1,10 @@
 export { AABB } from './aabb'
 export {
+	createRaymarchConstantLighting,
+	RaymarchDirectionalLight,
+	type RaymarchLighting,
+} from './appearances/lighting'
+export {
 	createRaymarchProgram,
 	type RaymarchAppearance,
 	type RaymarchBoundsProvider,

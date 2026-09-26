@@ -1,7 +1,7 @@
 # Standalone demos
 
-Each demo is a complete TypeScript file. Copy `b.ts` for a minimal sphere that
-renders once, or `a.ts` for an animated scene with PBR lighting. Neither demo
+Each demo is a complete TypeScript file. Copy `hello.ts` for a minimal sphere that
+renders once, or `logo.ts` for an animated scene with PBR lighting. Neither demo
 depends on Preact or other files in this repository.
 
 Install the runtime dependencies:
@@ -33,7 +33,7 @@ Set your canvas's drawing dimensions before starting the demo in a browser with
 WebGPU support:
 
 ```ts
-import { createDemoRenderer } from './b'
+import { createDemoRenderer } from './hello'
 
 const canvas = document.createElement('canvas')
 canvas.width = 800
@@ -47,5 +47,5 @@ const demo = await createDemoRenderer(canvas)
 ```
 
 Both demos use the canvas dimensions for the camera's aspect ratio and depth
-texture. If you change those dimensions, destroy and recreate the demo. Demo A's
-`destroy()` also stops its animation loop.
+texture. If you change those dimensions, destroy and recreate the demo. The logo
+demo's `destroy()` also stops its animation loop.

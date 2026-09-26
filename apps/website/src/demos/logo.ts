@@ -44,6 +44,9 @@ export async function createDemoRenderer(canvas: HTMLCanvasElement) {
 			return sdBox3d(point - center, halfSize) - 0.02
 		}
 
+		const skyColor = vec3f(0.2, 0.5, 0.8)
+		const groundColor = vec3f(0.4, 0.2, 0.1)
+
 		return {
 			surface: {
 				bounds: () => {
@@ -59,24 +62,25 @@ export async function createDemoRenderer(canvas: HTMLCanvasElement) {
 				material: () => {
 					'use gpu'
 					return PbrMaterial({
-						baseColor: vec3f(0.12, 0.45, 0.9),
-						metallic: 0.5,
+						baseColor: vec3f(0.2, 0.6, 0.9),
+						metallic: 0.6,
 						roughness: 0.2,
 						emission: vec3f(0),
 					})
 				},
+
 				lighting: createRaymarchConstantLighting({
 					ambient: vec3f(0),
 					directionalLights: [
 						{
 							direction: vec3f(-1, 1, -1),
 							color: vec3f(1, 1, 1),
-							intensity: 1.6,
+							intensity: 1,
 						},
 						{
-							direction: vec3f(5, 1, -8),
+							direction: vec3f(5, 1, -5),
 							color: vec3f(1, 0.15, 0.1),
-							intensity: 0.75,
+							intensity: 0.4,
 						},
 					],
 				}),
@@ -86,13 +90,15 @@ export async function createDemoRenderer(canvas: HTMLCanvasElement) {
 
 					const angle =
 						atan2(direction.x, -direction.y) * Math.PI + elapsedTime.$
+
 					const z =
+						0.25 +
 						direction.z + //
-						sin(angle * 3) * 0.08 +
-						sin(-angle * 1) * 0.12
+						sin(angle * 3) * 0.03 +
+						sin(-angle) * 0.05
 
 					const skyOrGround = smoothstep(-roughness, roughness, z)
-					return mix(vec3f(0.3, 0.15, 0), vec3f(0, 0.3, 0.6), skyOrGround)
+					return mix(groundColor, skyColor, skyOrGround)
 				},
 			}),
 
@@ -106,10 +112,7 @@ export async function createDemoRenderer(canvas: HTMLCanvasElement) {
 		}
 	})
 
-	const raymarchRender = createRaymarchRenderer({
-		root,
-		program,
-	})
+	const raymarchRender = createRaymarchRenderer({ root, program })
 
 	const startTime = performance.now()
 	let animationFrame: number

@@ -53,10 +53,7 @@ export async function createDemoRenderer(canvas: HTMLCanvasElement) {
 		}
 	})
 
-	const render = createRaymarchRenderer({
-		root,
-		program,
-	})
+	const render = createRaymarchRenderer({ root, program })
 
 	render({
 		colorAttachment: { view: canvasContext },

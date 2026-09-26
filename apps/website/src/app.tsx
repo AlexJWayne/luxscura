@@ -1,17 +1,17 @@
 import { useState } from 'preact/hooks'
 import { DemoRenderer } from './demo-renderer'
-import { createDemoRenderer as createDemoA } from './demos/a'
-import { createDemoRenderer as createDemoB } from './demos/b'
+import { createDemoRenderer as createHelloDemo } from './demos/hello'
+import { createDemoRenderer as createLogoDemo } from './demos/logo'
 
 const demos = [
-	{ name: 'A', createRenderer: createDemoA },
-	{ name: 'B', createRenderer: createDemoB },
+	{ name: 'Logo', createRenderer: createLogoDemo },
+	{ name: 'Hello', createRenderer: createHelloDemo },
 ] as const
 
 type DemoName = (typeof demos)[number]['name']
 
 export function App() {
-	const [activeDemo, setActiveDemo] = useState<DemoName>('A')
+	const [activeDemo, setActiveDemo] = useState<DemoName>('Logo')
 	const demo = demos.find(({ name }) => name === activeDemo) ?? demos[0]
 
 	return (

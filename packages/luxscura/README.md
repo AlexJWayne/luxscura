@@ -29,6 +29,34 @@ import { createPbrAppearance, PbrMaterial } from 'luxscura/pbr'
 Import shared lighting helpers and types from `luxscura`; appearance entry points
 export only their appearance-specific APIs.
 
+For simple lighting without shiny highlights, use `luxscura/matte`:
+
+```ts
+import { createRaymarchConstantLighting } from 'luxscura'
+import { createMatteAppearance } from 'luxscura/matte'
+import { vec3f } from 'typegpu/data'
+
+const appearance = createMatteAppearance({
+  color: () => {
+    'use gpu'
+    return vec3f(0.15, 0.5, 0.85)
+  },
+  lighting: createRaymarchConstantLighting({
+    ambient: vec3f(0.08, 0.12, 0.2),
+    directionalLights: [{
+      direction: vec3f(-1, 1, -1), // Direction the light travels.
+      color: vec3f(1, 0.9, 0.75),
+      intensity: 0.8,
+    }],
+  }),
+})
+```
+
+The color callback can vary the surface color using the raymarch result.
+Ambient fill and directional light contributions are multiplied by that color;
+all colors are linear RGB. Matte uses Lambert diffuse lighting and does not
+require an environment callback.
+
 ## Development
 
 Install dependencies and build the package:

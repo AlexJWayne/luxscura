@@ -1,8 +1,9 @@
 # Standalone demos
 
-Each demo is a complete TypeScript file. Copy `hello.ts` for a minimal sphere that
-renders once, or `logo.ts` for an animated scene with PBR lighting. Neither demo
-depends on Preact or other files in this repository.
+Each demo is a complete TypeScript file. Copy `hello.ts` for a minimal sphere,
+`matte.ts` for a colored sphere with directional lighting and ambient fill, or
+`logo.ts` for an animated scene with PBR lighting. The demos do not depend on
+Preact or other files in this repository.
 
 Install the runtime dependencies:
 
@@ -46,6 +47,6 @@ const demo = await createDemoRenderer(canvas)
 // demo.destroy()
 ```
 
-Both demos use the canvas dimensions for the camera's aspect ratio and depth
+All demos use the canvas dimensions for the camera's aspect ratio and depth
 texture. If you change those dimensions, destroy and recreate the demo. The logo
 demo's `destroy()` also stops its animation loop.

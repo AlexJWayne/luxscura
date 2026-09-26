@@ -14,6 +14,11 @@
 			"import": "./dist/index.js",
 			"default": "./dist/index.js"
 		},
+		"./matte": {
+			"types": "./dist/appearances/matte.d.ts",
+			"import": "./dist/matte.js",
+			"default": "./dist/matte.js"
+		},
 		"./pbr": {
 			"types": "./dist/appearances/pbr/index.d.ts",
 			"import": "./dist/pbr.js",

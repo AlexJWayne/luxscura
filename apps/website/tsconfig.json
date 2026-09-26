@@ -13,6 +13,7 @@
 		"moduleResolution": "Bundler",
 		"paths": {
 			"luxscura": ["../../packages/luxscura/src/index.ts"],
+			"luxscura/matte": ["../../packages/luxscura/src/appearances/matte.ts"],
 			"luxscura/pbr": ["../../packages/luxscura/src/appearances/pbr/index.ts"]
 		},
 		"resolveJsonModule": true,

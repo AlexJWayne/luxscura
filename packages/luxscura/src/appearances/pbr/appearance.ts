@@ -9,8 +9,8 @@ import {
 	reflect,
 	sqrt,
 } from 'typegpu/std'
+import type { RaymarchLighting } from '../../lighting'
 import type { RaymarchAppearance, RaymarchResult } from '../../program'
-import type { RaymarchLighting } from '../lighting'
 import { PbrMaterial } from './material'
 
 /** Position, normal, and PBR material consumed by the lighting calculation. */

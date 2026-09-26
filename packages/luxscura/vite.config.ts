@@ -7,6 +7,7 @@ export default defineConfig({
 		lib: {
 			entry: {
 				index: 'src/index.ts',
+				matte: 'src/appearances/matte.ts',
 				pbr: 'src/appearances/pbr/index.ts',
 			},
 			formats: ['es'],

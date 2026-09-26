@@ -15,6 +15,15 @@ export default defineConfig({
 				),
 			},
 			{
+				find: /^luxscura\/matte$/,
+				replacement: fileURLToPath(
+					new URL(
+						'../../packages/luxscura/src/appearances/matte.ts',
+						import.meta.url,
+					),
+				),
+			},
+			{
 				find: /^luxscura\/pbr$/,
 				replacement: fileURLToPath(
 					new URL(

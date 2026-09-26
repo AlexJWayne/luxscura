@@ -3,7 +3,7 @@ export {
 	createRaymarchConstantLighting,
 	RaymarchDirectionalLight,
 	type RaymarchLighting,
-} from './appearances/lighting'
+} from './lighting'
 export {
 	createRaymarchProgram,
 	type RaymarchAppearance,

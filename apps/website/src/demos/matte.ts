@@ -54,7 +54,7 @@ export async function createDemoRenderer(canvas: HTMLCanvasElement) {
 					ambient: vec3f(0.2, 0.05, 0.05),
 					directionalLights: [
 						{
-							direction: vec3f(1, 1, -1),
+							direction: vec3f(-1, 1, -1),
 							color: vec3f(1, 0.9, 0.75),
 							intensity: 1,
 						},

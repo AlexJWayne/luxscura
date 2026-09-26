@@ -1,51 +1,58 @@
 import { opSmoothUnion, sdBox3d, sdSphere } from '@typegpu/sdf'
-import { AABB, createRaymarchProgram, RaymarchCamera } from 'luxscura'
+import {
+	AABB,
+	createRaymarchProgram,
+	createRaymarchRenderer,
+	RaymarchCamera,
+} from 'luxscura'
 import {
 	createPbrAppearance,
 	createRaymarchConstantLighting,
 	PbrMaterial,
 } from 'luxscura/pbr'
-import { type v3f, vec3f } from 'typegpu/data'
+import { tgpu } from 'typegpu'
+import { f32, mat4x4f, type v3f, vec3f } from 'typegpu/data'
 import { atan2, cos, mix, sin, smoothstep } from 'typegpu/std'
-import { createCamera } from '../create-camera'
-import type { DemoContext } from '../demo-renderer'
+import { mat4 } from 'wgpu-matrix'
 
-export const programA = createRaymarchProgram<DemoContext>(
-	{ epsilon: 0.001 },
-	({ elapsedTime }) => {
-		const { cameraPosition, viewProjectionMatrix } = createCamera({
-			position: vec3f(0, -4, 0),
-			target: vec3f(0),
-			fieldOfView: Math.PI / 4,
-			near: 0.1,
-			far: 100,
+/** Starts the animated demo on a canvas with its width and height already set. */
+export async function createDemoRenderer(canvas: HTMLCanvasElement) {
+	const root = await tgpu.init()
+	const canvasContext = root.configureContext({ canvas })
+
+	const camera = createCamera(canvas)
+	const elapsedTime = root.createUniform(f32, 0)
+	const depthTexture = root
+		.createTexture({
+			size: [canvas.width, canvas.height],
+			format: 'depth24plus',
 		})
+		.$usage('render')
 
+	const program = createRaymarchProgram({ epsilon: 0.001 }, () => {
 		function sdMySphere(point: v3f) {
 			'use gpu'
-			return sdSphere(point, 0.8 + sin(elapsedTime.$) * 0.1)
+			const animatedScale = sin(elapsedTime.$) * 0.08
+			return sdSphere(point, 0.8 + animatedScale)
 		}
 
 		function sdMyBox(point: v3f) {
 			'use gpu'
-			return (
-				sdBox3d(
-					point - vec3f(0.5, 0, 0.5),
-					vec3f(0.45 + cos(elapsedTime.$) * 0.1),
-				) - 0.02
-			)
+			const animatedScale = cos(elapsedTime.$) * 0.06
+			const center = vec3f(0.45 - animatedScale, 0, 0.45 - animatedScale)
+			const halfSize = vec3f(0.5 + animatedScale, 0.5, 0.5 + animatedScale)
+			return sdBox3d(point - center, halfSize) - 0.02
 		}
 
-		// Return the raymarch program
 		return {
 			surface: {
 				bounds: () => {
 					'use gpu'
-					return AABB({ min: vec3f(-1.3), max: vec3f(1.3) })
+					return AABB({ min: vec3f(-1), max: vec3f(1) })
 				},
 				sd: (point) => {
 					'use gpu'
-					return opSmoothUnion(sdMySphere(point), sdMyBox(point), 0.3)
+					return opSmoothUnion(sdMySphere(point), sdMyBox(point), 0.2)
 				},
 			},
 			appearance: createPbrAppearance({
@@ -92,10 +99,47 @@ export const programA = createRaymarchProgram<DemoContext>(
 			camera: () => {
 				'use gpu'
 				return RaymarchCamera({
-					position: cameraPosition,
-					viewProjectionMatrix,
+					position: camera.cameraPosition,
+					viewProjectionMatrix: camera.viewProjectionMatrix,
 				})
 			},
 		}
-	},
-)
+	})
+
+	const raymarchRender = createRaymarchRenderer({
+		root,
+		program,
+	})
+
+	const startTime = performance.now()
+	let animationFrame: number
+
+	const render = (timestamp: number) => {
+		elapsedTime.write((timestamp - startTime) / 1000)
+		raymarchRender({
+			colorAttachment: { view: canvasContext },
+			depthStencilAttachment: { view: depthTexture },
+		})
+		animationFrame = requestAnimationFrame(render)
+	}
+	animationFrame = requestAnimationFrame(render)
+
+	return {
+		destroy: () => {
+			cancelAnimationFrame(animationFrame)
+			root.destroy()
+		},
+	}
+}
+
+/** Computes the values for a fixed perspective camera. */
+function createCamera({ width, height }: { width: number; height: number }) {
+	const aspectRatio = width / height
+	const position = vec3f(0, -4, 0)
+	const viewProjectionMatrix = mat4x4f()
+	const projectionMatrix = mat4.perspective(Math.PI / 5, aspectRatio, 0.1, 100)
+	const viewMatrix = mat4.lookAt(position, vec3f(0), vec3f(0, 0, 1))
+	mat4.multiply(projectionMatrix, viewMatrix, viewProjectionMatrix)
+
+	return { cameraPosition: position, viewProjectionMatrix }
+}

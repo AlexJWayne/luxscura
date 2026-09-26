@@ -1,80 +1,43 @@
-import {
-	createRaymarchRenderer,
-	type RaymarchProgramDefinition,
-} from 'luxscura'
 import { useEffect, useRef } from 'preact/hooks'
-import { type TgpuUniform, tgpu } from 'typegpu'
-import { f32 } from 'typegpu/data'
 
-export interface DemoContext {
-	elapsedTime: TgpuUniform<typeof f32>
-}
-
-type DemoProgram = Readonly<RaymarchProgramDefinition<DemoContext>>
-
-async function createDemoRenderer(
+type CreateDemoRenderer = (
 	canvas: HTMLCanvasElement,
-	program: DemoProgram,
-) {
-	const root = await tgpu.init()
-	const canvasContext = root.configureContext({ canvas })
-	const elapsedTime = root.createUniform(f32, 0)
-	const demoContext: DemoContext = { elapsedTime }
+) => Promise<{ destroy: () => void }>
 
-	const depthTexture = root
-		.createTexture({
-			size: [canvas.width, canvas.height],
-			format: 'depth24plus',
-		})
-		.$usage('render')
-
-	const raymarchRender = createRaymarchRenderer({
-		root,
-		program,
-		context: demoContext,
-	})
-	const startTime = performance.now()
-	const render = (timestamp: number) => {
-		elapsedTime.write((timestamp - startTime) / 1000)
-		raymarchRender({
-			colorAttachment: { view: canvasContext },
-			depthStencilAttachment: { view: depthTexture },
-		})
-		requestAnimationFrame(render)
-	}
-	requestAnimationFrame(render)
-
-	return {
-		destroy: () => root.destroy(),
-	}
-}
-
-function useDemoRenderer(program: DemoProgram) {
+function useDemoRenderer(createRenderer: CreateDemoRenderer) {
 	const canvasRef = useRef<HTMLCanvasElement>(null)
 
 	useEffect(() => {
 		const canvas = canvasRef.current
 		if (!canvas) return
 
-		let renderer: Awaited<ReturnType<typeof createDemoRenderer>> | undefined
+		let renderer: Awaited<ReturnType<CreateDemoRenderer>> | undefined
 		let disposed = false
 
-		void createDemoRenderer(canvas, program).then((nextRenderer) => {
-			if (disposed) nextRenderer.destroy()
-			else renderer = nextRenderer
-		})
+		void createRenderer(canvas)
+			.then((nextRenderer) => {
+				if (disposed) nextRenderer.destroy()
+				else renderer = nextRenderer
+			})
+			.catch((error: unknown) => {
+				console.error('Failed to initialize demo', error)
+			})
 
 		return () => {
 			disposed = true
 			renderer?.destroy()
 		}
-	}, [program])
+	}, [createRenderer])
 
 	return canvasRef
 }
 
-export function DemoRenderer({ program }: { program: DemoProgram }) {
-	const canvasRef = useDemoRenderer(program)
+export function DemoRenderer({
+	createRenderer,
+}: {
+	createRenderer: CreateDemoRenderer
+}) {
+	const canvasRef = useDemoRenderer(createRenderer)
 
 	return (
 		<canvas

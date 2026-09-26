@@ -1,11 +1,11 @@
 import { useState } from 'preact/hooks'
 import { DemoRenderer } from './demo-renderer'
-import { programA } from './demos/a'
-import { programB } from './demos/b'
+import { createDemoRenderer as createDemoA } from './demos/a'
+import { createDemoRenderer as createDemoB } from './demos/b'
 
 const demos = [
-	{ name: 'A', program: programA },
-	{ name: 'B', program: programB },
+	{ name: 'A', createRenderer: createDemoA },
+	{ name: 'B', createRenderer: createDemoB },
 ] as const
 
 type DemoName = (typeof demos)[number]['name']
@@ -39,7 +39,7 @@ export function App() {
 			</div>
 
 			<div class="grid flex-1 place-items-center">
-				<DemoRenderer key={demo.name} program={demo.program} />
+				<DemoRenderer key={demo.name} createRenderer={demo.createRenderer} />
 			</div>
 		</main>
 	)

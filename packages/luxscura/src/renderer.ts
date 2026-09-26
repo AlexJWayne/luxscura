@@ -364,7 +364,10 @@ export function createRaymarchRenderer<TContext = undefined>({
 	) => TgpuRenderPipeline<{ color: Vec4f }>
 } & (undefined extends TContext
 	? { context?: TContext }
-	: { context: TContext })) {
+	: {
+			/** @deprecated use closures instead. */
+			context: TContext
+		})) {
 	function createRenderer() {
 		const { camera, surface, appearance } = prepare(program.create(context))
 		const renderer = createRaymarchPipeline({

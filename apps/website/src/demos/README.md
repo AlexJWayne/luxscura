@@ -1,10 +1,9 @@
 # Standalone demos
 
-Each demo is a complete TypeScript file. Copy `hello.ts` for a minimal sphere,
-`matte.ts` for a colored sphere with directional lighting and ambient fill,
-`glossy.ts` for the same sphere with a shiny highlight, or `logo.ts` for an animated
-scene with PBR lighting. The demos do not depend on Preact or other files in this
-repository.
+Each demo is a complete TypeScript file. Copy `matte.ts` for a colored sphere with
+directional lighting and ambient fill, `glossy.ts` for the same sphere with a shiny
+highlight, or `logo.ts` for an animated scene with PBR lighting. The demos do not
+depend on Preact or other files in this repository.
 
 Install the runtime dependencies:
 
@@ -35,7 +34,7 @@ Set your canvas's drawing dimensions before starting the demo in a browser with
 WebGPU support:
 
 ```ts
-import { createDemoRenderer } from './hello'
+import { createDemoRenderer } from './matte'
 
 const canvas = document.createElement('canvas')
 canvas.width = 800

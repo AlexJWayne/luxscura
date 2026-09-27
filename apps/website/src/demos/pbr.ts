@@ -13,7 +13,7 @@ import { abs, floor, fract, max, mix, smoothstep } from 'typegpu/std'
 import { mat4 } from 'wgpu-matrix'
 
 /** Renders once on a canvas with its width and height already set. */
-export async function createDemoRenderer(canvas: HTMLCanvasElement) {
+export async function createPbrDemo(canvas: HTMLCanvasElement) {
 	const root = await tgpu.init()
 	const canvasContext = root.configureContext({ canvas })
 

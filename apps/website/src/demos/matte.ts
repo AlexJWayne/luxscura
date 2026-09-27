@@ -12,7 +12,7 @@ import { mat4x4f, vec3f } from 'typegpu/data'
 import { mat4 } from 'wgpu-matrix'
 
 /** Renders once on a canvas with its width and height already set. */
-export async function createDemoRenderer(canvas: HTMLCanvasElement) {
+export async function createMatteDemo(canvas: HTMLCanvasElement) {
 	const root = await tgpu.init()
 	const canvasContext = root.configureContext({ canvas })
 

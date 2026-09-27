@@ -1,15 +1,17 @@
 import { useState } from 'preact/hooks'
 import { DemoRenderer } from './demo-renderer'
-import { createDemoRenderer as createGlossyDemo } from './demos/glossy'
-import { createDemoRenderer as createLogoDemo } from './demos/logo'
-import { createDemoRenderer as createMatteDemo } from './demos/matte'
-import { createDemoRenderer as createPbrDemo } from './demos/pbr'
+import { createGlossyDemo } from './demos/glossy'
+import { createInstancesDemo } from './demos/instances'
+import { createLogoDemo } from './demos/logo'
+import { createMatteDemo } from './demos/matte'
+import { createPbrDemo } from './demos/pbr'
 
 const demos = [
 	{ name: 'Logo', createRenderer: createLogoDemo },
 	{ name: 'Matte', createRenderer: createMatteDemo },
 	{ name: 'Glossy', createRenderer: createGlossyDemo },
 	{ name: 'PBR', createRenderer: createPbrDemo },
+	{ name: 'Instances', createRenderer: createInstancesDemo },
 ] as const
 
 type DemoName = (typeof demos)[number]['name']

@@ -6,14 +6,14 @@ import {
 	createRaymarchRenderer,
 	RaymarchCamera,
 } from 'luxscura'
-import { createPbrAppearance, PbrMaterial } from 'luxscura/pbr'
+import { createGlossyAppearance, GlossyMaterial } from 'luxscura/glossy'
 import { tgpu } from 'typegpu'
 import { f32, mat4x4f, type v3f, vec3f } from 'typegpu/data'
-import { atan2, cos, mix, sin, smoothstep } from 'typegpu/std'
+import { cos, sin } from 'typegpu/std'
 import { mat4 } from 'wgpu-matrix'
 
 /** Starts the animated demo on a canvas with its width and height already set. */
-export async function createDemoRenderer(canvas: HTMLCanvasElement) {
+export async function createLogoDemo(canvas: HTMLCanvasElement) {
 	const root = await tgpu.init()
 	const canvasContext = root.configureContext({ canvas })
 
@@ -41,9 +41,6 @@ export async function createDemoRenderer(canvas: HTMLCanvasElement) {
 			return sdBox3d(point - center, halfSize) - 0.02
 		}
 
-		const skyColor = vec3f(0.2, 0.5, 0.8)
-		const groundColor = vec3f(0.4, 0.2, 0.1)
-
 		return {
 			surface: {
 				bounds: () => {
@@ -55,19 +52,9 @@ export async function createDemoRenderer(canvas: HTMLCanvasElement) {
 					return opSmoothUnion(sdMySphere(point), sdMyBox(point), 0.2)
 				},
 			},
-			appearance: createPbrAppearance({
-				material: () => {
-					'use gpu'
-					return PbrMaterial({
-						baseColor: vec3f(0.2, 0.6, 0.9),
-						metallic: 0.6,
-						roughness: 0.2,
-						emission: vec3f(0),
-					})
-				},
-
+			appearance: createGlossyAppearance({
 				lighting: createRaymarchConstantLighting({
-					ambient: vec3f(0),
+					ambient: vec3f(0.2),
 					directionalLights: [
 						{
 							direction: vec3f(-1, 1, -1),
@@ -81,21 +68,14 @@ export async function createDemoRenderer(canvas: HTMLCanvasElement) {
 						},
 					],
 				}),
-
-				environment: (direction, roughness) => {
+				material: () => {
 					'use gpu'
-
-					const angle =
-						atan2(direction.x, -direction.y) * Math.PI + elapsedTime.$
-
-					const z =
-						0.25 +
-						direction.z + //
-						sin(angle * 3) * 0.03 +
-						sin(-angle) * 0.05
-
-					const skyOrGround = smoothstep(-roughness, roughness, z)
-					return mix(groundColor, skyColor, skyOrGround)
+					return GlossyMaterial({
+						baseColor: vec3f(0.1, 0.4, 0.8),
+						specular: vec3f(0.9),
+						shininess: 128,
+						emission: vec3f(0),
+					})
 				},
 			}),
 

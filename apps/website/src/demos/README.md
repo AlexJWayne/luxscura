@@ -35,14 +35,14 @@ Set your canvas's drawing dimensions before starting the demo in a browser with
 WebGPU support:
 
 ```ts
-import { createDemoRenderer } from './matte'
+import { createMatteDemo } from './matte'
 
 const canvas = document.createElement('canvas')
 canvas.width = 800
 canvas.height = 800
 document.body.append(canvas)
 
-const demo = await createDemoRenderer(canvas)
+const demo = await createMatteDemo(canvas)
 
 // When removing the canvas or leaving the page:
 // demo.destroy()

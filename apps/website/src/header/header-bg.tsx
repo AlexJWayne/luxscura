@@ -5,20 +5,11 @@ import {
 	createRaymarchRenderer,
 	RaymarchCamera,
 } from 'luxscura'
-import type { TgpuRoot } from 'typegpu'
-import { f32, mat4x4f, type v3f, vec3f } from 'typegpu/data'
-import {
-	abs,
-	clamp,
-	discard,
-	dot,
-	floor,
-	fract,
-	mix,
-	sin,
-	smoothstep,
-} from 'typegpu/std'
+import type { RenderFlag, TgpuRoot, TgpuTexture } from 'typegpu'
+import { f32, mat4x4f, vec3f } from 'typegpu/data'
+import { discard, dot, floor, fract, mix, sin, smoothstep } from 'typegpu/std'
 import { mat4 } from 'wgpu-matrix'
+import { hsvToRgb } from '../hsv'
 import { useLuxscuraRenderer } from '../use-luxscura-renderer'
 
 const Z_AMPLITUDE = 0.05
@@ -35,22 +26,41 @@ export function createHeaderBgRenderer(
 	root: TgpuRoot,
 	canvas: HTMLCanvasElement,
 ) {
-	canvas.width = canvas.clientWidth
-	canvas.height = canvas.clientHeight
+	function resize() {
+		canvas.width = canvas.clientWidth
+		canvas.height = canvas.clientHeight
+
+		depthTexture = root
+			.createTexture({
+				size: [canvas.width, canvas.height],
+				format: 'depth24plus',
+			})
+			.$usage('render')
+
+		const cameraValues = createCamera(canvas)
+		cameraUniform.write(
+			RaymarchCamera({
+				viewProjectionMatrix: cameraValues.viewProjectionMatrix,
+				position: cameraValues.cameraPosition,
+			}),
+		)
+	}
+
+	const cameraUniform = root.createUniform(RaymarchCamera)
+	let depthTexture: TgpuTexture<{
+		size: [number, number]
+		format: 'depth24plus'
+	}> &
+		RenderFlag
+
+	resize()
 
 	const canvasContext = root.configureContext({
 		canvas,
 		alphaMode: 'premultiplied',
 	})
 
-	const camera = createCamera(canvas)
 	const elapsedTime = root.createUniform(f32, 0)
-	const depthTexture = root
-		.createTexture({
-			size: [canvas.width, canvas.height],
-			format: 'depth24plus',
-		})
-		.$usage('render')
 
 	const program = createRaymarchProgram({ epsilon: 0.001 }, () => {
 		return {
@@ -62,6 +72,7 @@ export function createHeaderBgRenderer(
 						max: vec3f(1000, 1000, 2),
 					})
 				},
+
 				sd: (point) => {
 					'use gpu'
 
@@ -104,10 +115,7 @@ export function createHeaderBgRenderer(
 
 			camera: () => {
 				'use gpu'
-				return RaymarchCamera({
-					position: camera.cameraPosition,
-					viewProjectionMatrix: camera.viewProjectionMatrix,
-				})
+				return RaymarchCamera(cameraUniform.$)
 			},
 		}
 	})
@@ -128,9 +136,8 @@ export function createHeaderBgRenderer(
 	animationFrame = requestAnimationFrame(render)
 
 	return {
-		destroy: () => {
-			cancelAnimationFrame(animationFrame)
-		},
+		destroy: () => cancelAnimationFrame(animationFrame),
+		resize,
 	}
 }
 
@@ -144,12 +151,4 @@ function createCamera({ width, height }: { width: number; height: number }) {
 	mat4.multiply(projectionMatrix, viewMatrix, viewProjectionMatrix)
 
 	return { cameraPosition: position, viewProjectionMatrix }
-}
-
-/** Converts HSV in [0, 1] to RGB in [0, 1]. Hue wraps every full turn. */
-function hsvToRgb(hsv: v3f): v3f {
-	'use gpu'
-	const hue = fract(vec3f(hsv.x).add(vec3f(0, 2 / 3, 1 / 3)))
-	const rgb = clamp(abs(hue.mul(6).sub(3)).sub(1), vec3f(0), vec3f(1))
-	return mix(vec3f(1), rgb, hsv.y).mul(hsv.z)
 }

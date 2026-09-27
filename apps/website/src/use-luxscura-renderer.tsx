@@ -6,7 +6,7 @@ export function useLuxscuraRenderer(
 	createRenderer: (
 		root: TgpuRoot,
 		canvas: HTMLCanvasElement,
-	) => { destroy: () => void },
+	) => { destroy: () => void; resize?: () => void },
 ) {
 	const canvasRef = useRef<HTMLCanvasElement>(null)
 
@@ -14,16 +14,20 @@ export function useLuxscuraRenderer(
 		const canvas = canvasRef.current
 		if (!canvas) return
 
-		let renderer: { destroy: () => void } | undefined
+		let renderer: { destroy: () => void; resize?: () => void } | undefined
 		let disposed = false
 
 		const nextRenderer = createRenderer(root, canvas)
 		if (disposed) nextRenderer.destroy()
 		else renderer = nextRenderer
 
+		const resizeObserver = new ResizeObserver(() => renderer?.resize?.())
+		if (canvasRef.current) resizeObserver.observe(canvasRef.current)
+
 		return () => {
 			disposed = true
 			renderer?.destroy()
+			resizeObserver.disconnect()
 		}
 	}, [createRenderer, root])
 

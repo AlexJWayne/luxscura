@@ -10,9 +10,12 @@
 		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
+		"@shikijs/langs": "^4.4.3",
+		"@shikijs/themes": "^4.4.3",
 		"@typegpu/sdf": "^0.12.1",
 		"luxscura": "workspace:*",
 		"preact": "^10.29.8",
+		"shiki": "^4.4.3",
 		"typegpu": "^0.12.6",
 		"wgpu-matrix": "^3.4.2"
 	},

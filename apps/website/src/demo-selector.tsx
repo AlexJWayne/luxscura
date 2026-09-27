@@ -1,5 +1,6 @@
 import { useState } from 'preact/hooks'
 import { DemoRenderer } from './demo-renderer'
+import { DemoSource } from './demo-source'
 import { createGlossyDemo } from './demos/glossy'
 import { createInstancesDemo } from './demos/instances'
 import { createLogoDemo } from './demos/logo'
@@ -14,10 +15,18 @@ const demos = [
 	{ name: 'Logo', createRenderer: createLogoDemo },
 ] as const
 
+const sourceFiles = import.meta.glob<string>('./demos/*.ts', {
+	query: '?raw',
+	import: 'default',
+})
+
 type DemoName = (typeof demos)[number]['name']
 export function DemoSelector() {
 	const [activeDemo, setActiveDemo] = useState<DemoName>('Logo')
 	const demo = demos.find(({ name }) => name === activeDemo) ?? demos[0]
+	const sourcePath = `./demos/${demo.name.toLowerCase()}.ts`
+	const loadSource = sourceFiles[sourcePath]
+	if (!loadSource) throw new Error(`Missing source file: ${sourcePath}`)
 
 	return (
 		<>
@@ -42,7 +51,9 @@ export function DemoSelector() {
 					))}
 				</fieldset>
 			</div>
+
 			<DemoRenderer key={demo.name} createRenderer={demo.createRenderer} />
+			<DemoSource key={sourcePath} loadSource={loadSource} />
 		</>
 	)
 }

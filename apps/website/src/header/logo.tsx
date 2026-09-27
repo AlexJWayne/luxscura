@@ -9,11 +9,24 @@ import {
 import { createGlossyAppearance, GlossyMaterial } from 'luxscura/glossy'
 import type { TgpuRoot } from 'typegpu'
 import { f32, mat4x4f, type v3f, vec3f } from 'typegpu/data'
-import { cos, sin } from 'typegpu/std'
+import {
+	abs,
+	clamp,
+	cos,
+	fract,
+	fwidth,
+	length,
+	max,
+	mix,
+	sin,
+	smoothstep,
+} from 'typegpu/std'
 import { mat4 } from 'wgpu-matrix'
-import { useLuxscuraRenderer } from './use-luxscura-renderer'
+import { useLuxscuraRenderer } from '../use-luxscura-renderer'
 
-async function createLogoRenderer(root: TgpuRoot, canvas: HTMLCanvasElement) {
+const SHAPE_SMOOTHING = 0.2
+
+function createLogoRenderer(root: TgpuRoot, canvas: HTMLCanvasElement) {
 	const canvasContext = root.configureContext({
 		canvas,
 		alphaMode: 'premultiplied',
@@ -29,15 +42,15 @@ async function createLogoRenderer(root: TgpuRoot, canvas: HTMLCanvasElement) {
 		.$usage('render')
 
 	const program = createRaymarchProgram({ epsilon: 0.001 }, () => {
-		function sdMySphere(point: v3f) {
+		function sdLogoSphere(point: v3f) {
 			'use gpu'
-			const animatedScale = sin(elapsedTime.$) * 0.08
+			const animatedScale = sin(elapsedTime.$) * 0.04
 			return sdSphere(point, 0.8 + animatedScale)
 		}
 
-		function sdMyBox(point: v3f) {
+		function sdLogoBox(point: v3f) {
 			'use gpu'
-			const animatedScale = cos(elapsedTime.$) * 0.06
+			const animatedScale = cos(elapsedTime.$) * 0.03
 			const center = vec3f(0.45 - animatedScale, 0, 0.45 - animatedScale)
 			const halfSize = vec3f(0.5 + animatedScale, 0.5, 0.5 + animatedScale)
 			return sdBox3d(point - center, halfSize) - 0.02
@@ -51,12 +64,16 @@ async function createLogoRenderer(root: TgpuRoot, canvas: HTMLCanvasElement) {
 				},
 				sd: (point) => {
 					'use gpu'
-					return opSmoothUnion(sdMySphere(point), sdMyBox(point), 0.2)
+					return opSmoothUnion(
+						sdLogoSphere(point),
+						sdLogoBox(point),
+						SHAPE_SMOOTHING,
+					)
 				},
 			},
 			appearance: createGlossyAppearance({
 				lighting: createRaymarchConstantLighting({
-					ambient: vec3f(0.2),
+					ambient: vec3f(0.35),
 					directionalLights: [
 						{
 							direction: vec3f(-1, 1, -1),
@@ -70,13 +87,37 @@ async function createLogoRenderer(root: TgpuRoot, canvas: HTMLCanvasElement) {
 						},
 					],
 				}),
-				material: () => {
+				material: (result) => {
 					'use gpu'
+
+					const sphereDistance = sdLogoSphere(result.position)
+					const boxDistance = sdLogoBox(result.position)
+
+					const isSphere = smoothstep(
+						0,
+						SHAPE_SMOOTHING,
+						boxDistance - sphereDistance + SHAPE_SMOOTHING,
+					)
+
+					const sphereColor = vec3f(0.7)
+					const boxColor = vec3f(0.3)
+
+					const distance = length(result.position.xz) - 0.35
+					const pixelWidth = max(fwidth(distance), 0.000001)
+					const halfWidth = 0.07
+
+					const glow = clamp(
+						(halfWidth - abs(distance)) / pixelWidth + 0.5,
+						0,
+						1,
+					)
+					const glowColor = hsvToRgb(vec3f(elapsedTime.$ * 0.1, 0.75, 1)) * glow
+
 					return GlossyMaterial({
-						baseColor: vec3f(0.1, 0.4, 0.8),
-						specular: vec3f(0.9),
-						shininess: 128,
-						emission: vec3f(0),
+						baseColor: mix(boxColor, sphereColor, isSphere),
+						specular: vec3f(0.7),
+						shininess: 256,
+						emission: glowColor,
 					})
 				},
 			}),
@@ -106,12 +147,7 @@ async function createLogoRenderer(root: TgpuRoot, canvas: HTMLCanvasElement) {
 	}
 	animationFrame = requestAnimationFrame(render)
 
-	return {
-		destroy: () => {
-			cancelAnimationFrame(animationFrame)
-			root.destroy()
-		},
-	}
+	return { destroy: () => cancelAnimationFrame(animationFrame) }
 }
 
 /** Computes the values for a fixed perspective camera. */
@@ -129,4 +165,12 @@ function createCamera({ width, height }: { width: number; height: number }) {
 export function Logo({ size, root }: { size: number; root: TgpuRoot }) {
 	const canvas = useLuxscuraRenderer(root, createLogoRenderer)
 	return <canvas ref={canvas} width={size} height={size} />
+}
+
+/** Converts HSV in [0, 1] to RGB in [0, 1]. Hue wraps every full turn. */
+function hsvToRgb(hsv: v3f): v3f {
+	'use gpu'
+	const hue = fract(vec3f(hsv.x).add(vec3f(0, 2 / 3, 1 / 3)))
+	const rgb = clamp(abs(hue.mul(6).sub(3)).sub(1), vec3f(0), vec3f(1))
+	return mix(vec3f(1), rgb, hsv.y).mul(hsv.z)
 }

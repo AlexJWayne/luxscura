@@ -6,7 +6,7 @@ import { createInstancesDemo } from './demos/instances'
 import { createLogoDemo } from './demos/logo'
 import { createMatteDemo } from './demos/matte'
 import { createPbrDemo } from './demos/pbr'
-import { Logo } from './logo'
+import { LuxscuraHeader } from './header/header'
 
 const demos = [
 	{ name: 'Logo', createRenderer: createLogoDemo },
@@ -26,12 +26,7 @@ export function App() {
 
 	return (
 		<div class="bg-gray-950 min-h-screen text-gray-300 flex flex-col">
-			<header class="bg-linear-to-b from-violet-950 to-gray-950 w-full flex items-center justify-center h-72">
-				<Logo root={root} size={250} />
-				<h1 class="font-orbitron text-[8rem] text-white text-shadow-[0_0_20px_rgba(255,255,255,1)]">
-					Luxscura
-				</h1>
-			</header>
+			<LuxscuraHeader root={root} />
 
 			<main class="flex flex-1 flex-col items-center">
 				<div class="max-w-4xl">

@@ -6,7 +6,7 @@ export function useLuxscuraRenderer(
 	createRenderer: (
 		root: TgpuRoot,
 		canvas: HTMLCanvasElement,
-	) => Promise<{ destroy: () => void }>,
+	) => { destroy: () => void },
 ) {
 	const canvasRef = useRef<HTMLCanvasElement>(null)
 
@@ -14,17 +14,12 @@ export function useLuxscuraRenderer(
 		const canvas = canvasRef.current
 		if (!canvas) return
 
-		let renderer: Awaited<Promise<{ destroy: () => void }>> | undefined
+		let renderer: { destroy: () => void } | undefined
 		let disposed = false
 
-		void createRenderer(root, canvas)
-			.then((nextRenderer) => {
-				if (disposed) nextRenderer.destroy()
-				else renderer = nextRenderer
-			})
-			.catch((error: unknown) => {
-				console.error('Failed to initialize demo', error)
-			})
+		const nextRenderer = createRenderer(root, canvas)
+		if (disposed) nextRenderer.destroy()
+		else renderer = nextRenderer
 
 		return () => {
 			disposed = true

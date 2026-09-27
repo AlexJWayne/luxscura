@@ -44,13 +44,13 @@ function createLogoRenderer(root: TgpuRoot, canvas: HTMLCanvasElement) {
 	const program = createRaymarchProgram({ epsilon: 0.001 }, () => {
 		function sdLogoSphere(point: v3f) {
 			'use gpu'
-			const animatedScale = sin(elapsedTime.$) * 0.04
+			const animatedScale = cos(elapsedTime.$) * 0.04
 			return sdSphere(point, 0.8 + animatedScale)
 		}
 
 		function sdLogoBox(point: v3f) {
 			'use gpu'
-			const animatedScale = cos(elapsedTime.$) * 0.03
+			const animatedScale = sin(elapsedTime.$) * 0.03
 			const center = vec3f(0.45 - animatedScale, 0, 0.45 - animatedScale)
 			const halfSize = vec3f(0.5 + animatedScale, 0.5, 0.5 + animatedScale)
 			return sdBox3d(point - center, halfSize) - 0.02

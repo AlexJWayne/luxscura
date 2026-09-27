@@ -100,7 +100,7 @@ function createLogoRenderer(root: TgpuRoot, canvas: HTMLCanvasElement) {
 					)
 
 					const sphereColor = vec3f(0.7)
-					const boxColor = vec3f(0.3)
+					const boxColor = vec3f(0.25)
 
 					const distance = length(result.position.xz) - 0.35
 					const pixelWidth = max(fwidth(distance), 0.000001)
@@ -164,7 +164,14 @@ function createCamera({ width, height }: { width: number; height: number }) {
 
 export function Logo({ size, root }: { size: number; root: TgpuRoot }) {
 	const canvas = useLuxscuraRenderer(root, createLogoRenderer)
-	return <canvas ref={canvas} width={size} height={size} />
+	return (
+		<canvas
+			ref={canvas}
+			width={size * window.devicePixelRatio * 1.5}
+			height={size * window.devicePixelRatio * 1.5}
+			style={{ width: size, height: size }}
+		/>
+	)
 }
 
 /** Converts HSV in [0, 1] to RGB in [0, 1]. Hue wraps every full turn. */

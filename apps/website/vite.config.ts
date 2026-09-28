@@ -5,6 +5,7 @@ import typegpuPlugin from 'unplugin-typegpu/vite'
 import { defineConfig } from 'vite'
 
 export default defineConfig({
+	base: process.env.PAGES_BASE_PATH ?? '/',
 	plugins: [typegpuPlugin(), preact(), tailwindcss()],
 	resolve: {
 		alias: [

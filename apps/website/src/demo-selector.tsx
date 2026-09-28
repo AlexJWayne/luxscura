@@ -22,7 +22,7 @@ const sourceFiles = import.meta.glob<string>('./demos/*.ts', {
 
 type DemoName = (typeof demos)[number]['name']
 export function DemoSelector() {
-	const [activeDemo, setActiveDemo] = useState<DemoName>('Logo')
+	const [activeDemo, setActiveDemo] = useState<DemoName>('Matte')
 	const demo = demos.find(({ name }) => name === activeDemo) ?? demos[0]
 	const sourcePath = `./demos/${demo.name.toLowerCase()}.ts`
 	const loadSource = sourceFiles[sourcePath]

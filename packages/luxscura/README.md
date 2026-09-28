@@ -96,4 +96,4 @@ requestAnimationFrame(renderFrame)
 
 ## More documentation coming soon
 
-See the examples on the website.
+See [the examples on the website](https://alexjwayne.github.io/luxscura/).

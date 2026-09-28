@@ -10,7 +10,8 @@
 		"test": "bun run --workspaces --if-present test",
 		"typecheck": "bun run --workspaces --if-present typecheck",
 		"check": "biome check .",
-		"format": "biome check --write ."
+		"format": "biome check --write .",
+		"publish": "npm publish --workspace=luxscura"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.4.7",

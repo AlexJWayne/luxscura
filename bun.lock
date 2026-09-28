@@ -34,7 +34,7 @@
     },
     "packages/luxscura": {
       "name": "luxscura",
-      "version": "0.0.0",
+      "version": "0.1.0",
       "devDependencies": {
         "@types/bun": "^1.3.14",
         "@webgpu/types": "^0.1.69",

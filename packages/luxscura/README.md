@@ -70,7 +70,7 @@ import { createRaymarchRenderer } from 'luxscura'
 
 const canvas = document.getElementById('canvas') as HTMLCanvasElement
 const root = await tgpu.init()
-const renderer = createRaymarchRenderer()
+const canvasContext = root.configureContext({ canvas })
 
 // A depth buffer is currently required
 const depthTexture = root

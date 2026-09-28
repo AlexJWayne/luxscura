@@ -1,9 +1,23 @@
 {
 	"name": "luxscura",
-	"version": "0.0.0",
+	"version": "0.1.0",
 	"description": "A TypeGPU ray marching renderer",
 	"license": "MIT",
 	"author": "Alex Wayne",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/AlexJWayne/luxscura.git",
+		"directory": "packages/luxscura"
+	},
+	"homepage": "https://alexjwayne.github.io/luxscura/",
+	"bugs": "https://github.com/AlexJWayne/luxscura/issues",
+	"keywords": [
+		"webgpu",
+		"typegpu",
+		"raymarching",
+		"renderer",
+		"sdf"
+	],
 	"type": "module",
 	"sideEffects": false,
 	"main": "./dist/index.js",

@@ -5,8 +5,13 @@ import {
 	createRaymarchProgram,
 	createRaymarchRenderer,
 	RaymarchCamera,
+	type RaymarchResult,
 } from 'luxscura'
-import { createGlossyAppearance, GlossyMaterial } from 'luxscura/glossy'
+import {
+	createGlossyAppearance,
+	GlossyMaterial,
+	mixGlossyMaterials,
+} from 'luxscura/glossy'
 import type { TgpuRoot } from 'typegpu'
 import { f32, mat4x4f, type v3f, vec3f } from 'typegpu/data'
 import {
@@ -24,8 +29,6 @@ import {
 import { mat4 } from 'wgpu-matrix'
 import { useLuxscuraRenderer } from '../use-luxscura-renderer'
 
-const SHAPE_SMOOTHING = 0.2
-
 function createLogoRenderer(root: TgpuRoot, canvas: HTMLCanvasElement) {
 	const canvasContext = root.configureContext({
 		canvas,
@@ -41,96 +44,129 @@ function createLogoRenderer(root: TgpuRoot, canvas: HTMLCanvasElement) {
 		})
 		.$usage('render')
 
-	const program = createRaymarchProgram({ epsilon: 0.001 }, () => {
-		function sdLogoSphere(point: v3f) {
+	const logo = {
+		bounds: () => {
 			'use gpu'
-			const animatedScale = cos(elapsedTime.$) * 0.04
-			return sdSphere(point, 0.8 + animatedScale)
-		}
+			return AABB({ min: vec3f(-1), max: vec3f(1) })
+		},
 
-		function sdLogoBox(point: v3f) {
+		smoothing: 0.2,
+
+		sd: (point: v3f) => {
 			'use gpu'
-			const animatedScale = sin(elapsedTime.$) * 0.03
-			const center = vec3f(0.45 - animatedScale, 0, 0.45 - animatedScale)
-			const halfSize = vec3f(0.5 + animatedScale, 0.5, 0.5 + animatedScale)
-			return sdBox3d(point - center, halfSize) - 0.02
-		}
+			return opSmoothUnion(
+				logo.sphere.sd(point),
+				logo.box.sd(point),
+				logo.smoothing,
+			)
+		},
 
-		return {
-			surface: {
-				bounds: () => {
-					'use gpu'
-					return AABB({ min: vec3f(-1), max: vec3f(1) })
-				},
-				sd: (point) => {
-					'use gpu'
-					return opSmoothUnion(
-						sdLogoSphere(point),
-						sdLogoBox(point),
-						SHAPE_SMOOTHING,
-					)
-				},
+		material: (result: RaymarchResult) => {
+			'use gpu'
+
+			const sphereDistance = logo.sphere.sd(result.position)
+			const boxDistance = logo.box.sd(result.position)
+			const sphereWeight = smoothstep(
+				0,
+				logo.smoothing,
+				boxDistance - sphereDistance + logo.smoothing,
+			)
+
+			return mixGlossyMaterials(
+				logo.box.material(),
+				logo.sphere.material(result),
+				sphereWeight,
+			)
+		},
+
+		sphere: {
+			sd: (point: v3f) => {
+				'use gpu'
+				const animatedScale = cos(elapsedTime.$) * 0.04
+				return sdSphere(point, 0.8 + animatedScale)
 			},
-			appearance: createGlossyAppearance({
-				lighting: createRaymarchConstantLighting({
-					ambient: vec3f(0.35),
-					directionalLights: [
-						{
-							direction: vec3f(-1, 1, -1),
-							color: vec3f(1, 1, 1),
-							intensity: 1,
-						},
-						{
-							direction: vec3f(5, 1, -5),
-							color: vec3f(1, 0.15, 0.1),
-							intensity: 0.4,
-						},
-					],
-				}),
-				material: (result) => {
+
+			ring: {
+				color: () => {
 					'use gpu'
+					return hsvToRgb(vec3f(elapsedTime.$ * 0.1, 0.75, 1))
+				},
 
-					const sphereDistance = sdLogoSphere(result.position)
-					const boxDistance = sdLogoBox(result.position)
-
-					const isSphere = smoothstep(
-						0,
-						SHAPE_SMOOTHING,
-						boxDistance - sphereDistance + SHAPE_SMOOTHING,
-					)
-
-					const sphereColor = vec3f(0.7)
-					const boxColor = vec3f(0.25)
-
+				mask: (result: RaymarchResult) => {
+					'use gpu'
 					const distance = length(result.position.xz) - 0.35
 					const pixelWidth = max(fwidth(distance), 0.000001)
 					const halfWidth = 0.07
-
-					const glow = clamp(
-						(halfWidth - abs(distance)) / pixelWidth + 0.5,
-						0,
-						1,
-					)
-					const glowColor = hsvToRgb(vec3f(elapsedTime.$ * 0.1, 0.75, 1)) * glow
-
-					return GlossyMaterial({
-						baseColor: mix(boxColor, sphereColor, isSphere),
-						specular: vec3f(0.7),
-						shininess: 256,
-						emission: glowColor,
-					})
+					return clamp((halfWidth - abs(distance)) / pixelWidth + 0.5, 0, 1)
 				},
-			}),
 
-			camera: () => {
+				emission: (result: RaymarchResult) => {
+					'use gpu'
+					const mask = logo.sphere.ring.mask(result)
+					const color = logo.sphere.ring.color()
+					return mask * color
+				},
+			},
+
+			material: (result: RaymarchResult) => {
 				'use gpu'
-				return RaymarchCamera({
-					position: camera.cameraPosition,
-					viewProjectionMatrix: camera.viewProjectionMatrix,
+				return GlossyMaterial({
+					baseColor: vec3f(0.7),
+					specular: vec3f(0.7),
+					shininess: 256,
+					emission: logo.sphere.ring.emission(result),
 				})
 			},
-		}
+		},
+
+		box: {
+			sd: (point: v3f) => {
+				'use gpu'
+				const animatedScale = sin(elapsedTime.$) * 0.03
+				const center = vec3f(0.45 - animatedScale, 0, 0.45 - animatedScale)
+				const halfSize = vec3f(0.5 + animatedScale, 0.5, 0.5 + animatedScale)
+				return sdBox3d(point - center, halfSize) - 0.02
+			},
+
+			material: () => {
+				'use gpu'
+				return GlossyMaterial({
+					baseColor: vec3f(0.25),
+					specular: vec3f(0.3),
+					shininess: 64,
+					emission: vec3f(0),
+				})
+			},
+		},
+	}
+
+	const lighting = createRaymarchConstantLighting({
+		ambient: vec3f(0.35),
+		directionalLights: [
+			{
+				direction: vec3f(-1, 1, -1),
+				color: vec3f(1, 1, 1),
+				intensity: 1,
+			},
+			{
+				direction: vec3f(5, 1, -5),
+				color: vec3f(1, 0.15, 0.1),
+				intensity: 0.4,
+			},
+		],
 	})
+
+	const program = createRaymarchProgram({ epsilon: 0.001 }, () => ({
+		surface: { bounds: logo.bounds, sd: logo.sd },
+		appearance: createGlossyAppearance({ material: logo.material, lighting }),
+		camera: () => {
+			'use gpu'
+			return RaymarchCamera({
+				position: camera.cameraPosition,
+				viewProjectionMatrix: camera.viewProjectionMatrix,
+			})
+		},
+	}))
 
 	const raymarchRender = createRaymarchRenderer({ root, program })
 

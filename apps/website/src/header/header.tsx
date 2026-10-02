@@ -18,7 +18,7 @@ export function LuxscuraHeader({ root }: { root: TgpuRoot }) {
 					<h1 class="font-orbitron text-9xl text-white text-shadow-[0_0_20px_rgba(255,255,255,1)] relative -top-6">
 						Luxscura
 					</h1>
-					<h2 class="font-sansation text-[2.5rem] text-purple-200/75 relative -top-4 font-extralight">
+					<h2 class="font-oxanium text-[2.5rem] text-purple-200/75 relative -top-4 font-light flex justify-center tracking-wide">
 						TypeGPU Raymarching Renderer
 					</h2>
 				</div>

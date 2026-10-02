@@ -6,13 +6,15 @@ import { createInstancesDemo } from './demos/instances'
 import { createLogoDemo } from './demos/logo'
 import { createMatteDemo } from './demos/matte'
 import { createPbrDemo } from './demos/pbr'
+import { createRepetitionDemo } from './demos/repetition'
 
 const demos = [
+	{ name: 'Repetition', createRenderer: createRepetitionDemo },
+	{ name: 'Logo', createRenderer: createLogoDemo },
 	{ name: 'Matte', createRenderer: createMatteDemo },
 	{ name: 'Glossy', createRenderer: createGlossyDemo },
 	{ name: 'PBR', createRenderer: createPbrDemo },
 	{ name: 'Instances', createRenderer: createInstancesDemo },
-	{ name: 'Logo', createRenderer: createLogoDemo },
 ] as const
 
 const sourceFiles = import.meta.glob<string>('./demos/*.ts', {

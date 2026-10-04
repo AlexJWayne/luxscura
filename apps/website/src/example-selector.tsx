@@ -5,12 +5,14 @@ import { createGlossyExample } from './examples/glossy'
 import { createInstancesExample } from './examples/instances'
 import { createLogoExample } from './examples/logo'
 import { createMatteExample } from './examples/matte'
+import { createMouseExample } from './examples/mouse'
 import { createPbrExample } from './examples/pbr'
 import { createRepetitionExample } from './examples/repetition'
 
 const examples = [
 	{ name: 'Repetition', createRenderer: createRepetitionExample },
 	{ name: 'Logo', createRenderer: createLogoExample },
+	{ name: 'Mouse', createRenderer: createMouseExample },
 	{ name: 'Matte', createRenderer: createMatteExample },
 	{ name: 'Glossy', createRenderer: createGlossyExample },
 	{ name: 'PBR', createRenderer: createPbrExample },

@@ -69,72 +69,70 @@ export async function createInstancesExample(canvas: HTMLCanvasElement) {
 		.$usage('storage')
 		.as('readonly')
 
-	const program = createRaymarchProgram(
-		{ epsilon: 0.001 },
-		{
-			camera: () => {
+	const program = createRaymarchProgram({
+		options: { epsilon: 0.001 },
+		camera: () => {
+			'use gpu'
+			return RaymarchCamera({
+				position: camera.cameraPosition,
+				viewProjectionMatrix: camera.viewProjectionMatrix,
+			})
+		},
+
+		surface: {
+			bounds: (instanceIndex) => {
 				'use gpu'
-				return RaymarchCamera({
-					position: camera.cameraPosition,
-					viewProjectionMatrix: camera.viewProjectionMatrix,
+				const instance = instances.$[instanceIndex]
+				// All three shapes fit these bounds, with a little surface padding.
+				const halfSize = vec3f(instance.scale * 0.5 + 0.001)
+				return AABB({
+					min: instance.position - halfSize,
+					max: instance.position + halfSize,
 				})
 			},
 
-			surface: {
-				bounds: (instanceIndex) => {
-					'use gpu'
-					const instance = instances.$[instanceIndex]
-					// All three shapes fit these bounds, with a little surface padding.
-					const halfSize = vec3f(instance.scale * 0.5 + 0.001)
-					return AABB({
-						min: instance.position - halfSize,
-						max: instance.position + halfSize,
-					})
-				},
+			sd: (point, instanceIndex) => {
+				'use gpu'
+				const instance = instances.$[instanceIndex]
+				const localPoint = point - instance.position
+				const halfSize = instance.scale * 0.5
 
-				sd: (point, instanceIndex) => {
-					'use gpu'
-					const instance = instances.$[instanceIndex]
-					const localPoint = point - instance.position
-					const halfSize = instance.scale * 0.5
+				switch (instance.shape) {
+					case Shape.Sphere:
+						return sdSphere(localPoint, halfSize)
+					case Shape.Cube:
+						return sdBox3d(localPoint, vec3f(halfSize))
+					case Shape.Cylinder:
+						return sdCappedCylinder(localPoint.xzy, halfSize, halfSize)
+					default:
+						return 1e9
+				}
+			},
+		},
 
-					switch (instance.shape) {
-						case Shape.Sphere:
-							return sdSphere(localPoint, halfSize)
-						case Shape.Cube:
-							return sdBox3d(localPoint, vec3f(halfSize))
-						case Shape.Cylinder:
-							return sdCappedCylinder(localPoint.xzy, halfSize, halfSize)
-						default:
-							return 1e9
-					}
-				},
+		appearance: createGlossyAppearance({
+			material: (result) => {
+				'use gpu'
+				return GlossyMaterial({
+					baseColor: vec3f(instances.$[result.instanceIndex].color),
+					specular: vec3f(0.6),
+					shininess: 64,
+					emission: vec3f(0),
+				})
 			},
 
-			appearance: createGlossyAppearance({
-				material: (result) => {
-					'use gpu'
-					return GlossyMaterial({
-						baseColor: vec3f(instances.$[result.instanceIndex].color),
-						specular: vec3f(0.6),
-						shininess: 64,
-						emission: vec3f(0),
-					})
-				},
-
-				lighting: createRaymarchConstantLighting({
-					ambient: vec3f(0.3),
-					directionalLights: [
-						{
-							direction: vec3f(-1, -1, -2),
-							color: vec3f(1),
-							intensity: 0.7,
-						},
-					],
-				}),
+			lighting: createRaymarchConstantLighting({
+				ambient: vec3f(0.3),
+				directionalLights: [
+					{
+						direction: vec3f(-1, -1, -2),
+						color: vec3f(1),
+						intensity: 0.7,
+					},
+				],
 			}),
-		},
-	)
+		}),
+	})
 
 	const render = createRaymarchRenderer({ root, program })
 

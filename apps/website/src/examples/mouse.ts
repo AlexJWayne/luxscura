@@ -135,23 +135,21 @@ export async function createMouseExample(canvas: HTMLCanvasElement) {
 		],
 	})
 
-	const program = createRaymarchProgram(
-		{ epsilon: 0.001 },
-		{
-			surface: { bounds: mouse.bounds, sd: mouse.sd },
-			appearance: createGlossyAppearance({
-				material: mouse.material,
-				lighting,
-			}),
-			camera: () => {
-				'use gpu'
-				return RaymarchCamera({
-					position: camera.cameraPosition,
-					viewProjectionMatrix: camera.viewProjectionMatrix,
-				})
-			},
+	const program = createRaymarchProgram({
+		options: { epsilon: 0.001 },
+		surface: { bounds: mouse.bounds, sd: mouse.sd },
+		appearance: createGlossyAppearance({
+			material: mouse.material,
+			lighting,
+		}),
+		camera: () => {
+			'use gpu'
+			return RaymarchCamera({
+				position: camera.cameraPosition,
+				viewProjectionMatrix: camera.viewProjectionMatrix,
+			})
 		},
-	)
+	})
 	const raymarchRender = createRaymarchRenderer({ root, program })
 
 	const onPointerMove = (event: PointerEvent) => {

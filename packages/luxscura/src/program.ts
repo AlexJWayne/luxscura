@@ -146,7 +146,7 @@ const HOT_DATA_KEY = 'raymarchProgramDefinition'
  * may read changing buffer data without rebuilding the pipeline.
  *
  * ```ts
- * const program = createRaymarchProgram(options, program)
+ * const program = createRaymarchProgram({ ...program, options })
  * ```
  *
  * ## Vite Hot Reloading
@@ -158,15 +158,19 @@ const HOT_DATA_KEY = 'raymarchProgramDefinition'
  * may currently define only one HMR-backed raymarch program.
  *
  * ```ts
- * const program = createRaymarchProgram(options, program, import.meta.hot)
+ * const program = createRaymarchProgram({ ...program, options }, import.meta.hot)
  * import.meta.hot?.accept()
  * ```
  *
  * @returns A read-only program definition consumed by raymarch renderer factories.
  */
 export function createRaymarchProgram(
-	options: RaymarchProgramOptions,
-	program: RaymarchProgram,
+	{
+		options,
+		...program
+	}: RaymarchProgram & {
+		options: RaymarchProgramOptions
+	},
 
 	/**
 	 * Optional hot-module context used to preserve and update the program

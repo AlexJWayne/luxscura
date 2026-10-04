@@ -184,20 +184,18 @@ export async function createLogoExample(canvas: HTMLCanvasElement) {
 	})
 
 	// Create the raymarch program with the logo.
-	const program = createRaymarchProgram(
-		{ epsilon: 0.001 },
-		{
-			surface: { bounds: logo.bounds, sd: logo.sd },
-			appearance: createGlossyAppearance({ material: logo.material, lighting }),
-			camera: () => {
-				'use gpu'
-				return RaymarchCamera({
-					position: camera.cameraPosition,
-					viewProjectionMatrix: camera.viewProjectionMatrix,
-				})
-			},
+	const program = createRaymarchProgram({
+		options: { epsilon: 0.001 },
+		surface: { bounds: logo.bounds, sd: logo.sd },
+		appearance: createGlossyAppearance({ material: logo.material, lighting }),
+		camera: () => {
+			'use gpu'
+			return RaymarchCamera({
+				position: camera.cameraPosition,
+				viewProjectionMatrix: camera.viewProjectionMatrix,
+			})
 		},
-	)
+	})
 
 	// Create the raymarch renderer with the program.
 	const raymarchRender = createRaymarchRenderer({ root, program })

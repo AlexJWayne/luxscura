@@ -88,7 +88,7 @@ test('rebuilds the pipeline with updated program callbacks and options', () => {
 			},
 		}),
 	}
-	const program = createRaymarchProgram(options, initialBody, hot)
+	const program = createRaymarchProgram({ ...initialBody, options }, hot)
 	const preparedPrograms: RaymarchProgram[] = []
 	const colorAttachment = {} as ColorAttachment
 	const depthStencilAttachment = {} as DepthStencilAttachment
@@ -187,8 +187,7 @@ test('rebuilds the pipeline with updated program callbacks and options', () => {
 		}),
 	}
 	const updatedProgram = createRaymarchProgram(
-		{ ...options, depthCompare: 'always' },
-		updatedBody,
+		{ ...updatedBody, options: { ...options, depthCompare: 'always' } },
 		hot,
 	)
 	render({ colorAttachment, depthStencilAttachment, instances: 4 })
@@ -196,7 +195,9 @@ test('rebuilds the pipeline with updated program callbacks and options', () => {
 
 	expect(updatedProgram).toBe(program)
 	expect(program.version).toBe(2)
-	expect(program.program).toBe(updatedBody)
+	expect(program.program.camera).toBe(updatedBody.camera)
+	expect(program.program.surface).toBe(updatedBody.surface)
+	expect(program.program.appearance).toBe(updatedBody.appearance)
 	expect(preparedPrograms).toEqual([initialBody, updatedBody])
 	expect(createRenderPipeline).toHaveBeenCalledTimes(2)
 	expect(createRenderPipeline.mock.calls[1]?.[0]).toMatchObject({
@@ -232,36 +233,34 @@ test('compiles a custom appearance with screen-space derivatives', () => {
 			return pipeline
 		},
 	} as unknown as TgpuRoot
-	const program = createRaymarchProgram(
-		{ epsilon: 0.01 },
-		{
-			camera: () => {
+	const program = createRaymarchProgram({
+		options: { epsilon: 0.01 },
+		camera: () => {
+			'use gpu'
+			return RaymarchCamera({
+				position: vec3f(0, 0, -3),
+				viewProjectionMatrix: mat4x4f(),
+			})
+		},
+		surface: {
+			bounds: () => {
 				'use gpu'
-				return RaymarchCamera({
-					position: vec3f(0, 0, -3),
-					viewProjectionMatrix: mat4x4f(),
-				})
+				return AABB({ min: vec3f(-1), max: vec3f(1) })
 			},
-			surface: {
-				bounds: () => {
-					'use gpu'
-					return AABB({ min: vec3f(-1), max: vec3f(1) })
-				},
-				sd: (position) => {
-					'use gpu'
-					return position.z
-				},
-			},
-			appearance: (result) => {
+			sd: (position) => {
 				'use gpu'
-				return vec3f(
-					fwidth(result.fragmentCoord.x),
-					f32(result.stepCount),
-					result.rayDistance,
-				)
+				return position.z
 			},
 		},
-	)
+		appearance: (result) => {
+			'use gpu'
+			return vec3f(
+				fwidth(result.fragmentCoord.x),
+				f32(result.stepCount),
+				result.rayDistance,
+			)
+		},
+	})
 	createRaymarchRenderer({ root, program })
 	if (!descriptor) throw new Error('Expected a render pipeline descriptor')
 

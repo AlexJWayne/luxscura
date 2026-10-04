@@ -156,20 +156,18 @@ function createLogoRenderer(root: TgpuRoot, canvas: HTMLCanvasElement) {
 		],
 	})
 
-	const program = createRaymarchProgram(
-		{ epsilon: 0.001 },
-		{
-			surface: { bounds: logo.bounds, sd: logo.sd },
-			appearance: createGlossyAppearance({ material: logo.material, lighting }),
-			camera: () => {
-				'use gpu'
-				return RaymarchCamera({
-					position: camera.cameraPosition,
-					viewProjectionMatrix: camera.viewProjectionMatrix,
-				})
-			},
+	const program = createRaymarchProgram({
+		options: { epsilon: 0.001 },
+		surface: { bounds: logo.bounds, sd: logo.sd },
+		appearance: createGlossyAppearance({ material: logo.material, lighting }),
+		camera: () => {
+			'use gpu'
+			return RaymarchCamera({
+				position: camera.cameraPosition,
+				viewProjectionMatrix: camera.viewProjectionMatrix,
+			})
 		},
-	)
+	})
 
 	const raymarchRender = createRaymarchRenderer({ root, program })
 

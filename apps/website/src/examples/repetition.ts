@@ -145,20 +145,18 @@ export async function createRepetitionExample(canvas: HTMLCanvasElement) {
 		},
 	}
 
-	const program = createRaymarchProgram(
-		{ epsilon: 0.001 },
-		{
-			surface: { bounds: repetition.bounds, sd: repetition.sd },
-			appearance: repetition.appearance.shade,
-			camera: () => {
-				'use gpu'
-				return RaymarchCamera({
-					position: camera.cameraPosition,
-					viewProjectionMatrix: camera.viewProjectionMatrix,
-				})
-			},
+	const program = createRaymarchProgram({
+		options: { epsilon: 0.001 },
+		surface: { bounds: repetition.bounds, sd: repetition.sd },
+		appearance: repetition.appearance.shade,
+		camera: () => {
+			'use gpu'
+			return RaymarchCamera({
+				position: camera.cameraPosition,
+				viewProjectionMatrix: camera.viewProjectionMatrix,
+			})
 		},
-	)
+	})
 
 	const raymarchRender = createRaymarchRenderer({ root, program })
 

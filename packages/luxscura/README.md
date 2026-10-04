@@ -22,7 +22,8 @@ import { createRaymarchProgram } from 'luxscura'
 // This is a camera position and view projection matrix
 const camera = createCamera() 
 
-const program = createRaymarchProgram({ epsilon: 0.001 }, {
+const program = createRaymarchProgram({
+	options: { epsilon: 0.001 },
 	camera: () => {
 		'use gpu'
 		return RaymarchCamera({

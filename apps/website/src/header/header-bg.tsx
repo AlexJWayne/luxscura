@@ -145,17 +145,15 @@ export function createHeaderBgRenderer(
 		},
 	}
 
-	const program = createRaymarchProgram(
-		{ epsilon: 0.001 },
-		{
-			surface: { bounds: background.bounds, sd: background.sd },
-			appearance: background.appearance.shade,
-			camera: () => {
-				'use gpu'
-				return RaymarchCamera(cameraUniform.$)
-			},
+	const program = createRaymarchProgram({
+		options: { epsilon: 0.001 },
+		surface: { bounds: background.bounds, sd: background.sd },
+		appearance: background.appearance.shade,
+		camera: () => {
+			'use gpu'
+			return RaymarchCamera(cameraUniform.$)
 		},
-	)
+	})
 
 	const raymarchRender = createRaymarchRenderer({ root, program })
 

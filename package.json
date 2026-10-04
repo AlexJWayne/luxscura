@@ -11,6 +11,7 @@
 		"typecheck": "bun run --workspaces --if-present typecheck",
 		"check": "biome check .",
 		"format": "biome check --write .",
+		"deploy": "gh workflow run deploy-pages.yml --ref main",
 		"publish": "npm publish --workspace=luxscura"
 	},
 	"devDependencies": {

@@ -15,7 +15,7 @@ type SourceState =
 	| { status: 'ready'; source: string; html: string }
 	| { status: 'error' }
 
-export function DemoSource({
+export function ExampleSource({
 	loadSource,
 }: {
 	loadSource: () => Promise<string>
@@ -45,7 +45,7 @@ export function DemoSource({
 				})
 			})
 			.catch((error: unknown) => {
-				console.error('Failed to load demo source', error)
+				console.error('Failed to load example source', error)
 				if (active) setSourceState({ status: 'error' })
 			})
 
@@ -85,7 +85,7 @@ export function DemoSource({
 			</div>
 			{sourceState.status === 'ready' ? (
 				<div
-					class="demo-source overflow-x-auto"
+					class="example-source overflow-x-auto"
 					// Shiki escapes the source before producing highlighted HTML.
 					dangerouslySetInnerHTML={{ __html: sourceState.html }}
 				/>

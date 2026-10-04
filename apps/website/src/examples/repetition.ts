@@ -21,8 +21,8 @@ import {
 } from 'typegpu/std'
 import { mat4 } from 'wgpu-matrix'
 
-/** Starts the animated demo on a canvas with its width and height already set. */
-export async function createRepetitionDemo(canvas: HTMLCanvasElement) {
+/** Starts the animated example on a canvas with its width and height already set. */
+export async function createRepetitionExample(canvas: HTMLCanvasElement) {
 	const root = await tgpu.init()
 	const canvasContext = root.configureContext({
 		canvas,

@@ -39,7 +39,7 @@ const colors = [
 	vec3f(0.65, 0.08, 1), // Violet
 ]
 
-export async function createInstancesDemo(canvas: HTMLCanvasElement) {
+export async function createInstancesExample(canvas: HTMLCanvasElement) {
 	const root = await tgpu.init()
 	const canvasContext = root.configureContext({ canvas })
 
@@ -147,7 +147,7 @@ export async function createInstancesDemo(canvas: HTMLCanvasElement) {
 	return { destroy: () => root.destroy() }
 }
 
-/** Uses the glossy demo's Z-up view, raised 60 degrees above the XY grid. */
+/** Uses the glossy example's Z-up view, raised 60 degrees above the XY grid. */
 function createCamera({ width, height }: { width: number; height: number }) {
 	const elevation = Math.PI / 3
 	const distance = GRID_SIZE * 2

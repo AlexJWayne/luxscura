@@ -6,13 +6,13 @@ import {
 	createRaymarchRenderer,
 	RaymarchCamera,
 } from 'luxscura'
-import { createMatteAppearance } from 'luxscura/matte'
+import { createGlossyAppearance, GlossyMaterial } from 'luxscura/glossy'
 import { tgpu } from 'typegpu'
 import { mat4x4f, vec3f } from 'typegpu/data'
 import { mat4 } from 'wgpu-matrix'
 
 /** Renders once on a canvas with its width and height already set. */
-export async function createMatteDemo(canvas: HTMLCanvasElement) {
+export async function createGlossyExample(canvas: HTMLCanvasElement) {
 	const root = await tgpu.init()
 	const canvasContext = root.configureContext({ canvas })
 
@@ -46,10 +46,15 @@ export async function createMatteDemo(canvas: HTMLCanvasElement) {
 				},
 			},
 
-			appearance: createMatteAppearance({
-				color: () => {
+			appearance: createGlossyAppearance({
+				material: () => {
 					'use gpu'
-					return vec3f(0.15, 0.5, 0.85)
+					return GlossyMaterial({
+						baseColor: vec3f(0.15, 0.5, 0.85),
+						specular: vec3f(1),
+						shininess: 128,
+						emission: vec3f(0),
+					})
 				},
 				lighting: createRaymarchConstantLighting({
 					ambient: vec3f(0.2, 0.05, 0.05),

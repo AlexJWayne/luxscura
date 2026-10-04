@@ -9,7 +9,7 @@
 	--font-oxanium: "Oxanium", sans-serif;
 }
 
-.demo-source pre {
+.example-source pre {
 	min-width: max-content;
 	margin: 0;
 	padding: 3.5rem 1.25rem 1.25rem;
@@ -19,11 +19,11 @@
 	tab-size: 2;
 }
 
-.demo-source code {
+.example-source code {
 	counter-reset: line;
 }
 
-.demo-source .line::before {
+.example-source .line::before {
 	counter-increment: line;
 	content: counter(line);
 	display: inline-block;

@@ -28,8 +28,8 @@ import {
 } from 'typegpu/std'
 import { mat4 } from 'wgpu-matrix'
 
-/** Starts the animated demo on a canvas with its width and height already set. */
-export async function createLogoDemo(canvas: HTMLCanvasElement) {
+/** Starts the animated example on a canvas with its width and height already set. */
+export async function createLogoExample(canvas: HTMLCanvasElement) {
 	const root = await tgpu.init()
 	const canvasContext = root.configureContext({
 		canvas,

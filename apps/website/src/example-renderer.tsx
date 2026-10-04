@@ -1,17 +1,17 @@
 import { useEffect, useRef } from 'preact/hooks'
 
-type CreateDemoRenderer = (
+type CreateExampleRenderer = (
 	canvas: HTMLCanvasElement,
 ) => Promise<{ destroy: () => void }>
 
-function useDemoRenderer(createRenderer: CreateDemoRenderer) {
+function useExampleRenderer(createRenderer: CreateExampleRenderer) {
 	const canvasRef = useRef<HTMLCanvasElement>(null)
 
 	useEffect(() => {
 		const canvas = canvasRef.current
 		if (!canvas) return
 
-		let renderer: Awaited<ReturnType<CreateDemoRenderer>> | undefined
+		let renderer: Awaited<ReturnType<CreateExampleRenderer>> | undefined
 		let disposed = false
 
 		void createRenderer(canvas)
@@ -20,7 +20,7 @@ function useDemoRenderer(createRenderer: CreateDemoRenderer) {
 				else renderer = nextRenderer
 			})
 			.catch((error: unknown) => {
-				console.error('Failed to initialize demo', error)
+				console.error('Failed to initialize example', error)
 			})
 
 		return () => {
@@ -32,12 +32,12 @@ function useDemoRenderer(createRenderer: CreateDemoRenderer) {
 	return canvasRef
 }
 
-export function DemoRenderer({
+export function ExampleRenderer({
 	createRenderer,
 }: {
-	createRenderer: CreateDemoRenderer
+	createRenderer: CreateExampleRenderer
 }) {
-	const canvasRef = useDemoRenderer(createRenderer)
+	const canvasRef = useExampleRenderer(createRenderer)
 
 	return (
 		<canvas

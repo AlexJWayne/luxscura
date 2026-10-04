@@ -32,7 +32,7 @@ export function DemoSelector() {
 
 	return (
 		<>
-			<div class="max-w-4xl flex flex-col items-center my-4">
+			<div class="max-w-4xl flex flex-col items-center my-4 font-oxanium">
 				<h1 class="text-3xl my-4 text-purple-400 font-bold">Examples</h1>
 
 				<fieldset class="flex rounded-lg p-1">

@@ -69,8 +69,9 @@ export async function createInstancesDemo(canvas: HTMLCanvasElement) {
 		.$usage('storage')
 		.as('readonly')
 
-	const program = createRaymarchProgram({ epsilon: 0.001 }, () => {
-		return {
+	const program = createRaymarchProgram(
+		{ epsilon: 0.001 },
+		{
 			camera: () => {
 				'use gpu'
 				return RaymarchCamera({
@@ -132,8 +133,8 @@ export async function createInstancesDemo(canvas: HTMLCanvasElement) {
 					],
 				}),
 			}),
-		}
-	})
+		},
+	)
 
 	const render = createRaymarchRenderer({ root, program })
 

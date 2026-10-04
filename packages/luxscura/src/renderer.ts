@@ -327,31 +327,28 @@ function createRaymarchPipeline({
  * raymarching, normal calculation, appearance, depth, and draw submission to the
  * surface supplied by the program.
  *
- * Program creation and preparation are repeated when the program version
- * changes, allowing shader HMR to rebuild the pipeline without replacing the
- * supplied setup-time context.
+ * Program preparation and pipeline compilation are repeated when the program
+ * version changes, allowing shader HMR to use the updated callbacks.
  *
  * @returns A function that draws a requested number of raymarched instances.
  */
-export function createRaymarchRenderer<TContext = undefined>({
+export function createRaymarchRenderer({
 	root,
-	program,
-	context = undefined as TContext,
+	program: programDefinition,
 	renderTarget,
 	prepare = (program) => program,
 	preparePipeline,
 }: {
 	root: TgpuRoot
 
-	/** Program providing pipeline options, a version, and the shader factory. */
-	program: Readonly<RaymarchProgramDefinition<TContext>>
+	/** Program providing pipeline options, a version, and shader callbacks. */
+	program: Readonly<RaymarchProgramDefinition>
 
 	/** Render target configuration used to create a compatible pipeline. */
 	renderTarget?: Readonly<RaymarchRenderTargetOptions>
 
 	/**
-	 * Optional program transformation applied after program creation and before
-	 * pipeline compilation.
+	 * Optional program transformation applied before pipeline compilation.
 	 */
 	prepare?: (program: RaymarchProgram) => RaymarchProgram
 
@@ -362,17 +359,12 @@ export function createRaymarchRenderer<TContext = undefined>({
 	preparePipeline?: (
 		pipeline: TgpuRenderPipeline<{ color: Vec4f }>,
 	) => TgpuRenderPipeline<{ color: Vec4f }>
-} & (undefined extends TContext
-	? { context?: TContext }
-	: {
-			/** @deprecated use closures instead. */
-			context: TContext
-		})) {
+}) {
 	function createRenderer() {
-		const { camera, surface, appearance } = prepare(program.create(context))
+		const { camera, surface, appearance } = prepare(programDefinition.program)
 		const renderer = createRaymarchPipeline({
 			root,
-			options: program.options,
+			options: programDefinition.options,
 			surface,
 			camera,
 			appearance,
@@ -383,15 +375,15 @@ export function createRaymarchRenderer<TContext = undefined>({
 		return renderer
 	}
 
-	let activeVersion = program.version
+	let activeVersion = programDefinition.version
 	let activeRenderer = createRenderer()
 
 	return function renderRaymarchedInstances(options: RaymarchRenderOptions) {
-		if (activeVersion !== program.version) {
+		if (activeVersion !== programDefinition.version) {
 			const nextRenderer = createRenderer()
 
 			activeRenderer = nextRenderer
-			activeVersion = program.version
+			activeVersion = programDefinition.version
 		}
 
 		activeRenderer(options)

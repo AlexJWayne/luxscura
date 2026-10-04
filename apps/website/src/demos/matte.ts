@@ -24,8 +24,9 @@ export async function createMatteDemo(canvas: HTMLCanvasElement) {
 		})
 		.$usage('render')
 
-	const program = createRaymarchProgram({ epsilon: 0.001 }, () => {
-		return {
+	const program = createRaymarchProgram(
+		{ epsilon: 0.001 },
+		{
 			camera: () => {
 				'use gpu'
 				return RaymarchCamera({
@@ -61,8 +62,8 @@ export async function createMatteDemo(canvas: HTMLCanvasElement) {
 					],
 				}),
 			}),
-		}
-	})
+		},
+	)
 
 	const render = createRaymarchRenderer({ root, program })
 

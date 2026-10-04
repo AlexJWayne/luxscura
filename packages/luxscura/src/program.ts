@@ -125,11 +125,11 @@ export interface RaymarchProgram {
 	appearance: RaymarchAppearance
 }
 
-/** Versioned factory that creates a program from setup-time context. */
-export interface RaymarchProgramDefinition<TContext> {
+/** Versioned program with its pipeline compilation options. */
+export interface RaymarchProgramDefinition {
 	version: number
 	options: RaymarchProgramOptions
-	create: (context: TContext) => RaymarchProgram
+	program: RaymarchProgram
 }
 
 /** Minimal hot-module context used to retain a program across reevaluations. */
@@ -141,40 +141,46 @@ const HOT_DATA_KEY = 'raymarchProgramDefinition'
 
 /**
  * Creates a versioned program definition without allocating GPU resources. It
- * owns the factory for surface, camera, and appearance callbacks,
+ * holds the surface, camera, and appearance callbacks,
  * and the options used to compile them into a raymarching pipeline. Callbacks
  * may read changing buffer data without rebuilding the pipeline.
  *
+ * ```ts
+ * const program = createRaymarchProgram(options, program)
+ * ```
+ *
+ * ## Vite Hot Reloading
+ *
  * When `hot` is provided, reevaluating the module updates the existing program
  * definition and increments its version. Renderer instances observe that
- * version and rebuild their pipelines while retaining setup-time resources. The
+ * version and rebuild their pipelines using the updated callbacks. The
  * defining module must call `import.meta.hot?.accept()` for this behavior, and
  * may currently define only one HMR-backed raymarch program.
  *
  * ```ts
- * const program = createRaymarchProgram(options, create, import.meta.hot)
+ * const program = createRaymarchProgram(options, program, import.meta.hot)
  * import.meta.hot?.accept()
  * ```
  *
  * @returns A read-only program definition consumed by raymarch renderer factories.
  */
-export function createRaymarchProgram<TContext = undefined>(
+export function createRaymarchProgram(
 	options: RaymarchProgramOptions,
-	create: (context: TContext) => RaymarchProgram,
+	program: RaymarchProgram,
 
 	/**
 	 * Optional hot-module context used to preserve and update the program
 	 * across module reevaluations.
 	 */
 	hot?: RaymarchHotContext,
-): Readonly<RaymarchProgramDefinition<TContext>> {
+): Readonly<RaymarchProgramDefinition> {
 	const definition = (hot?.data[HOT_DATA_KEY] as
-		| RaymarchProgramDefinition<TContext>
-		| undefined) ?? { version: 0, options, create }
+		| RaymarchProgramDefinition
+		| undefined) ?? { version: 0, options, program }
 
 	definition.version += 1
 	definition.options = options
-	definition.create = create
+	definition.program = program
 	if (hot) hot.data[HOT_DATA_KEY] = definition
 
 	return definition

@@ -25,8 +25,9 @@ export async function createPbrDemo(canvas: HTMLCanvasElement) {
 		})
 		.$usage('render')
 
-	const program = createRaymarchProgram({ epsilon: 0.001 }, () => {
-		return {
+	const program = createRaymarchProgram(
+		{ epsilon: 0.001 },
+		{
 			camera: () => {
 				'use gpu'
 				return RaymarchCamera({
@@ -83,8 +84,8 @@ export async function createPbrDemo(canvas: HTMLCanvasElement) {
 					return mix(color, isLight ? vec3f(0.65) : vec3f(0.04), panel)
 				},
 			}),
-		}
-	})
+		},
+	)
 
 	const render = createRaymarchRenderer({ root, program })
 

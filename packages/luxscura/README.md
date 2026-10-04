@@ -22,44 +22,42 @@ import { createRaymarchProgram } from 'luxscura'
 // This is a camera position and view projection matrix
 const camera = createCamera() 
 
-const program = createRaymarchProgram({ epsilon: 0.001 }, () => {
-	return {
-		camera: () => {
+const program = createRaymarchProgram({ epsilon: 0.001 }, {
+	camera: () => {
+		'use gpu'
+		return RaymarchCamera({
+			position: camera.cameraPosition,
+			viewProjectionMatrix: camera.viewProjectionMatrix,
+		})
+	},
+
+	surface: {
+		bounds: () => {
 			'use gpu'
-			return RaymarchCamera({
-				position: camera.cameraPosition,
-				viewProjectionMatrix: camera.viewProjectionMatrix,
-			})
+			return AABB({ min: vec3f(-1), max: vec3f(1) })
 		},
-
-		surface: {
-			bounds: () => {
-				'use gpu'
-				return AABB({ min: vec3f(-1), max: vec3f(1) })
-			},
-			sd: (point) => {
-				'use gpu'
-				return sdSphere(point, 1)
-			},
+		sd: (point) => {
+			'use gpu'
+			return sdSphere(point, 1)
 		},
+	},
 
-		appearance: createMatteAppearance({
-			color: () => {
-				'use gpu'
-				return vec3f(0.15, 0.5, 0.85)
-			},
-			lighting: createRaymarchConstantLighting({
-				ambient: vec3f(0.2, 0.05, 0.05),
-				directionalLights: [
-					{
-						direction: vec3f(-1, 1, -1),
-						color: vec3f(1, 0.9, 0.75),
-						intensity: 1,
-					},
-				],
-			}),
+	appearance: createMatteAppearance({
+		color: () => {
+			'use gpu'
+			return vec3f(0.15, 0.5, 0.85)
+		},
+		lighting: createRaymarchConstantLighting({
+			ambient: vec3f(0.2, 0.05, 0.05),
+			directionalLights: [
+				{
+					direction: vec3f(-1, 1, -1),
+					color: vec3f(1, 0.9, 0.75),
+					intensity: 1,
+				},
+			],
 		}),
-	}
+	}),
 })
 ```
 

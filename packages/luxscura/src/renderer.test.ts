@@ -18,7 +18,7 @@ import {
 } from './program'
 import { createRaymarchRenderer } from './renderer'
 
-test('rebuilds all program callbacks with current options and the same setup context', () => {
+test('rebuilds the pipeline with updated program callbacks and options', () => {
 	const draw = mock((_vertexCount: number, _instanceCount: number) => {})
 	const pipeline = {
 		withPerformanceCallback() {
@@ -35,7 +35,6 @@ test('rebuilds all program callbacks with current options and the same setup con
 	const createRenderPipeline = mock((_descriptor: unknown) => pipeline)
 	// Exercise lifecycle and shader generation without a GPU device.
 	const root = { createRenderPipeline } as unknown as TgpuRoot
-	const resource = { value: 1 }
 	const hot: RaymarchHotContext = { data: {} }
 	const options = {
 		label: 'Lifecycle test',
@@ -89,24 +88,20 @@ test('rebuilds all program callbacks with current options and the same setup con
 			},
 		}),
 	}
-	const initialFactory = mock(
-		(_context: { resource: typeof resource }) => initialBody,
-	)
-	const program = createRaymarchProgram(options, initialFactory, hot)
+	const program = createRaymarchProgram(options, initialBody, hot)
 	const preparedPrograms: RaymarchProgram[] = []
 	const colorAttachment = {} as ColorAttachment
 	const depthStencilAttachment = {} as DepthStencilAttachment
 	const render = createRaymarchRenderer({
 		root,
 		program,
-		context: { resource },
-		prepare: (createdProgram) => {
-			preparedPrograms.push(createdProgram)
-			const appearance = createdProgram.appearance
+		prepare: (currentProgram) => {
+			preparedPrograms.push(currentProgram)
+			const appearance = currentProgram.appearance
 			return {
-				...createdProgram,
+				...currentProgram,
 				surface: {
-					...createdProgram.surface,
+					...currentProgram.surface,
 					isRayVisible: () => {
 						'use gpu'
 						return true
@@ -122,8 +117,6 @@ test('rebuilds all program callbacks with current options and the same setup con
 
 	render({ colorAttachment, depthStencilAttachment, instances: 2 })
 	render({ colorAttachment, depthStencilAttachment, instances: 3 })
-	expect(initialFactory).toHaveBeenCalledTimes(1)
-	expect(initialFactory).toHaveBeenCalledWith({ resource })
 	expect(preparedPrograms).toEqual([initialBody])
 	expect(createRenderPipeline).toHaveBeenCalledTimes(1)
 
@@ -193,19 +186,17 @@ test('rebuilds all program callbacks with current options and the same setup con
 			},
 		}),
 	}
-	const updatedFactory = mock(
-		(_context: { resource: typeof resource }) => updatedBody,
-	)
-	createRaymarchProgram(
+	const updatedProgram = createRaymarchProgram(
 		{ ...options, depthCompare: 'always' },
-		updatedFactory,
+		updatedBody,
 		hot,
 	)
 	render({ colorAttachment, depthStencilAttachment, instances: 4 })
 	render({ colorAttachment, depthStencilAttachment, instances: 5 })
 
-	expect(updatedFactory).toHaveBeenCalledTimes(1)
-	expect(updatedFactory.mock.calls[0]?.[0]).toEqual({ resource })
+	expect(updatedProgram).toBe(program)
+	expect(program.version).toBe(2)
+	expect(program.program).toBe(updatedBody)
 	expect(preparedPrograms).toEqual([initialBody, updatedBody])
 	expect(createRenderPipeline).toHaveBeenCalledTimes(2)
 	expect(createRenderPipeline.mock.calls[1]?.[0]).toMatchObject({
@@ -241,33 +232,36 @@ test('compiles a custom appearance with screen-space derivatives', () => {
 			return pipeline
 		},
 	} as unknown as TgpuRoot
-	const program = createRaymarchProgram({ epsilon: 0.01 }, () => ({
-		camera: () => {
-			'use gpu'
-			return RaymarchCamera({
-				position: vec3f(0, 0, -3),
-				viewProjectionMatrix: mat4x4f(),
-			})
-		},
-		surface: {
-			bounds: () => {
+	const program = createRaymarchProgram(
+		{ epsilon: 0.01 },
+		{
+			camera: () => {
 				'use gpu'
-				return AABB({ min: vec3f(-1), max: vec3f(1) })
+				return RaymarchCamera({
+					position: vec3f(0, 0, -3),
+					viewProjectionMatrix: mat4x4f(),
+				})
 			},
-			sd: (position) => {
+			surface: {
+				bounds: () => {
+					'use gpu'
+					return AABB({ min: vec3f(-1), max: vec3f(1) })
+				},
+				sd: (position) => {
+					'use gpu'
+					return position.z
+				},
+			},
+			appearance: (result) => {
 				'use gpu'
-				return position.z
+				return vec3f(
+					fwidth(result.fragmentCoord.x),
+					f32(result.stepCount),
+					result.rayDistance,
+				)
 			},
 		},
-		appearance: (result) => {
-			'use gpu'
-			return vec3f(
-				fwidth(result.fragmentCoord.x),
-				f32(result.stepCount),
-				result.rayDistance,
-			)
-		},
-	}))
+	)
 	createRaymarchRenderer({ root, program })
 	if (!descriptor) throw new Error('Expected a render pipeline descriptor')
 

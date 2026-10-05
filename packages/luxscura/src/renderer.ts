@@ -75,12 +75,14 @@ type RayHit = Infer<typeof RayHit>
 function createRaymarch({
 	sdSurface,
 	maxSteps,
+	stepScale,
 	maxDistance,
 	epsilon,
 	marchBeyondBounds,
 }: {
 	sdSurface: RaymarchDistanceFunction
 	maxSteps: number
+	stepScale: number
 	maxDistance?: number
 	epsilon: number
 	marchBeyondBounds: boolean
@@ -128,7 +130,7 @@ function createRaymarch({
 					stepCount,
 				})
 			}
-			marchedDistance += distance
+			marchedDistance += distance * stepScale
 		}
 
 		return RayHit({
@@ -207,6 +209,7 @@ function createRaymarchPipeline({
 		sdSurface: surface.sd,
 		epsilon: options.epsilon,
 		maxSteps: options.maxSteps ?? 100,
+		stepScale: options.stepScale ?? 1,
 		maxDistance: options.maxDistance,
 		marchBeyondBounds: options.marchBeyondBounds ?? false,
 	})

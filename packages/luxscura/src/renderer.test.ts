@@ -144,6 +144,8 @@ test('rebuilds the pipeline with updated program callbacks and options', () => {
 		}
 	}
 	const initialShader = resolvePipeline(0)
+	expect(initialShader).toMatch(/marchedDistance \+= \(distance\w* \* 1f\)/)
+	expect(initialShader).toMatch(/if \(\(distance\w* < 0\.01f\)\)/)
 	expect(initialShader).toContain('fwidth')
 	for (const value of ['11.25', '22.25', '33.25', '77.25']) {
 		expect(initialShader).toContain(value)
@@ -187,7 +189,10 @@ test('rebuilds the pipeline with updated program callbacks and options', () => {
 		}),
 	}
 	const updatedProgram = createRaymarchProgram(
-		{ ...updatedBody, options: { ...options, depthCompare: 'always' } },
+		{
+			...updatedBody,
+			options: { ...options, depthCompare: 'always', stepScale: 0.5 },
+		},
 		hot,
 	)
 	render({ colorAttachment, depthStencilAttachment, instances: 4 })
@@ -205,6 +210,8 @@ test('rebuilds the pipeline with updated program callbacks and options', () => {
 	})
 	expect(draw.mock.calls.map(([, count]) => count)).toEqual([2, 3, 4, 5])
 	const updatedShader = resolvePipeline(1)
+	expect(updatedShader).toMatch(/marchedDistance \+= \(distance\w* \* 0\.5f\)/)
+	expect(updatedShader).toMatch(/if \(\(distance\w* < 0\.01f\)\)/)
 	for (const value of ['44.25', '55.25', '66.25', '77.25']) {
 		expect(updatedShader).toContain(value)
 	}

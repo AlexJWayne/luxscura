@@ -76,6 +76,12 @@ export type RaymarchProgramOptions = {
 	epsilonNormal?: number
 	/** Maximum number of marching steps per ray; defaults to 100. */
 	maxSteps?: number
+	/**
+	 * Multiplier applied to each raymarch step; defaults to 1.
+	 * Values between 0 and 1 reduce overshooting from domain warping at the cost
+	 * of more marching steps.
+	 */
+	stepScale?: number
 	/** Write surface hit depth to the depth buffer; defaults to true. */
 	depthWriteEnabled?: boolean
 	/** Comparison used to test surface hit depth against the depth buffer; defaults to 'less'. */

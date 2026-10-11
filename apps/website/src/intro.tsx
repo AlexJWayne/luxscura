@@ -9,6 +9,23 @@ export function Intro() {
 			</p>
 
 			<h3 class="text-xl mt-8 font-oxanium font-bold text-purple-300">
+				Get started
+			</h3>
+			<pre class="my-4 overflow-x-auto rounded-xl border border-purple-300/15 bg-gray-900 p-5 text-sm leading-relaxed">
+				<code>{`npm install luxscura typegpu
+npm install --save-dev unplugin-typegpu`}</code>
+			</pre>
+			<p>
+				Requires a browser with WebGPU support and TypeGPU's build plugin.
+				<br />
+				See the{' '}
+				<a href="https://github.com/AlexJWayne/luxscura/blob/main/packages/luxscura/README.md">
+					README
+				</a>{' '}
+				for detailed setup and usage.
+			</p>
+
+			<h3 class="text-xl mt-8 font-oxanium font-bold text-purple-300">
 				Why Luxscura?
 			</h3>
 			<p>

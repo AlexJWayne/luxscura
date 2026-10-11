@@ -6,6 +6,7 @@ import {
 	struct,
 	u32,
 	type v3f,
+	type v4f,
 	vec2f,
 	vec3f,
 } from 'typegpu/data'
@@ -45,11 +46,13 @@ export const RaymarchResult = struct({
 export type RaymarchResult = Infer<typeof RaymarchResult>
 
 /**
- * GPU function calculating linear RGB for every visible fragment after marching.
- * The renderer uses the result only on hits, with opaque coverage and its own
- * depth. Derivative-dependent work must run outside hit-dependent branches.
+ * GPU function calculating unpremultiplied linear RGB and opacity for every
+ * visible fragment after marching. Alpha is opacity in [0, 1]. The renderer uses
+ * the result only on hits and writes surface depth regardless of alpha, subject
+ * to the program's depth settings. Derivative-dependent work must run outside
+ * hit-dependent branches.
  */
-export type RaymarchAppearance = (result: RaymarchResult) => v3f
+export type RaymarchAppearance = (result: RaymarchResult) => v4f
 
 export type RaymarchBoundsProvider = (instanceIdx: number) => AABB
 
@@ -127,7 +130,7 @@ export interface RaymarchProgram {
 	/** Surface bounds, signed distance, and optional visibility behavior. */
 	surface: RaymarchSurface
 
-	/** GPU function returning linear RGB for the raymarch result. */
+	/** GPU function returning unpremultiplied linear RGB and opacity for the raymarch result. */
 	appearance: RaymarchAppearance
 }
 

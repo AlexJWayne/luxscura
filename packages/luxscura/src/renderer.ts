@@ -300,7 +300,7 @@ function createRaymarchPipeline({
 
 				if (hit.isHit) {
 					return {
-						color: vec4f(color, 1),
+						color,
 						$fragDepth: hit.depth,
 					}
 				}

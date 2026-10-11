@@ -115,6 +115,7 @@ function createLogoRenderer(root: TgpuRoot, canvas: HTMLCanvasElement) {
 					specular: vec3f(0.7),
 					shininess: 256,
 					emission: logo.sphere.ring.emission(result),
+					opacity: 1,
 				})
 			},
 		},
@@ -135,6 +136,7 @@ function createLogoRenderer(root: TgpuRoot, canvas: HTMLCanvasElement) {
 					specular: vec3f(0.3),
 					shininess: 64,
 					emission: vec3f(0),
+					opacity: 1,
 				})
 			},
 		},

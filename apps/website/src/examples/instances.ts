@@ -118,6 +118,7 @@ export async function createInstancesExample(canvas: HTMLCanvasElement) {
 					specular: vec3f(0.6),
 					shininess: 64,
 					emission: vec3f(0),
+					opacity: 1,
 				})
 			},
 

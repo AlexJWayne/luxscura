@@ -1,4 +1,11 @@
-import { type Infer, struct, type v3f, vec3f } from 'typegpu/data'
+import {
+	type Infer,
+	struct,
+	type v3f,
+	type v4f,
+	vec3f,
+	vec4f,
+} from 'typegpu/data'
 import {
 	clamp,
 	dot,
@@ -202,6 +209,7 @@ export type PbrMaterialSampler = (result: RaymarchResult) => PbrMaterial
 
 /**
  * Creates a metallic/roughness appearance for a raymarch program.
+ * Material opacity applies to the entire shaded result during blending.
  *
  * Material sampling runs for hits and misses so derivatives remain available.
  * Lighting runs only for hits. The returned color on a miss is ignored by the
@@ -222,18 +230,21 @@ export function createPbrAppearance({
 }): RaymarchAppearance {
 	const shadeSurface = createPbrShadeSurface({ lighting, environment })
 
-	return function pbrAppearance(result: RaymarchResult): v3f {
+	return function pbrAppearance(result: RaymarchResult): v4f {
 		'use gpu'
 		const materialSample = material(result)
-		if (!result.isHit) return vec3f(0)
+		if (!result.isHit) return vec4f(0)
 
-		return shadeSurface(
-			result.rayOrigin,
-			PbrSurfaceSample({
-				position: result.position,
-				normal: result.normal,
-				material: materialSample,
-			}),
+		return vec4f(
+			shadeSurface(
+				result.rayOrigin,
+				PbrSurfaceSample({
+					position: result.position,
+					normal: result.normal,
+					material: materialSample,
+				}),
+			),
+			materialSample.opacity,
 		)
 	}
 }

@@ -1,4 +1,4 @@
-import { type v3f, vec3f } from 'typegpu/data'
+import { type v4f, vec4f } from 'typegpu/data'
 import { dot, max, normalize, pow, saturate } from 'typegpu/std'
 import type { RaymarchLighting } from '../../lighting'
 import type { RaymarchAppearance, RaymarchResult } from '../../program'
@@ -10,6 +10,7 @@ export type GlossyMaterialSampler = (result: RaymarchResult) => GlossyMaterial
 /**
  * Creates a glossy appearance using diffuse lighting and Blinn-Phong highlights.
  * Ambient fill affects the diffuse color; emission is added independently.
+ * Material opacity applies to the entire shaded result during blending.
  *
  * Material sampling runs for hits and misses so derivatives remain available.
  * Lighting runs only for hits. Colors and lighting values are linear RGB.
@@ -21,10 +22,10 @@ export function createGlossyAppearance({
 	material: GlossyMaterialSampler
 	lighting: () => RaymarchLighting
 }): RaymarchAppearance {
-	return function glossyAppearance(result: RaymarchResult): v3f {
+	return function glossyAppearance(result: RaymarchResult): v4f {
 		'use gpu'
 		const materialSample = material(result)
-		if (!result.isHit) return vec3f(0)
+		if (!result.isHit) return vec4f(0)
 
 		const lights = lighting()
 		let color =
@@ -53,6 +54,6 @@ export function createGlossyAppearance({
 			color += light.color * light.intensity * response
 		}
 
-		return color
+		return vec4f(color, materialSample.opacity)
 	}
 }

@@ -120,6 +120,7 @@ export async function createMouseExample(canvas: HTMLCanvasElement) {
 				specular: vec3f(0.6),
 				shininess: 96,
 				emission: vec3f(0),
+				opacity: 1,
 			})
 		},
 	}

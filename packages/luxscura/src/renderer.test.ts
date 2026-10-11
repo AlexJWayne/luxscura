@@ -4,7 +4,7 @@ import tgpu, {
 	type DepthStencilAttachment,
 	type TgpuRoot,
 } from 'typegpu'
-import { f32, mat4x4f, vec3f } from 'typegpu/data'
+import { f32, mat4x4f, vec3f, vec4f } from 'typegpu/data'
 import { fwidth } from 'typegpu/std'
 import { AABB } from './aabb'
 import { createPbrAppearance, PbrMaterial } from './appearances/pbr'
@@ -70,6 +70,7 @@ test('rebuilds the pipeline with updated program callbacks and options', () => {
 					metallic: 0,
 					roughness: 1,
 					emission: vec3f(0),
+					opacity: 1,
 				})
 			},
 			lighting: createRaymarchConstantLighting({
@@ -109,7 +110,7 @@ test('rebuilds the pipeline with updated program callbacks and options', () => {
 				},
 				appearance: (result) => {
 					'use gpu'
-					return appearance(result) + vec3f(77.25)
+					return appearance(result) + vec4f(vec3f(77.25), 0)
 				},
 			}
 		},
@@ -170,7 +171,13 @@ test('rebuilds the pipeline with updated program callbacks and options', () => {
 		appearance: createPbrAppearance({
 			material: () => {
 				'use gpu'
-				return PbrMaterial()
+				return PbrMaterial({
+					baseColor: vec3f(0),
+					metallic: 0,
+					roughness: 0,
+					emission: vec3f(0),
+					opacity: 1,
+				})
 			},
 			lighting: createRaymarchConstantLighting({
 				ambient: vec3f(0.2),
@@ -220,7 +227,7 @@ test('rebuilds the pipeline with updated program callbacks and options', () => {
 	}
 })
 
-test('compiles a custom appearance with screen-space derivatives', () => {
+test('compiles a custom RGBA appearance with screen-space derivatives', () => {
 	let descriptor: Parameters<TgpuRoot['createRenderPipeline']>[0] | undefined
 	const pipeline = {
 		withPerformanceCallback() {
@@ -261,10 +268,11 @@ test('compiles a custom appearance with screen-space derivatives', () => {
 		},
 		appearance: (result) => {
 			'use gpu'
-			return vec3f(
+			return vec4f(
 				fwidth(result.fragmentCoord.x),
 				f32(result.stepCount),
 				result.rayDistance,
+				0.375,
 			)
 		},
 	})
@@ -284,6 +292,7 @@ test('compiles a custom appearance with screen-space derivatives', () => {
 		const shader = tgpu.resolve([shaderRoot.createRenderPipeline(descriptor)])
 		expect(shader).toContain('fwidth')
 		expect(shader).toContain('@builtin(position)')
+		expect(shader).toContain('0.375f')
 	} finally {
 		if (previousUsage)
 			Object.defineProperty(globalThis, 'GPUBufferUsage', previousUsage)

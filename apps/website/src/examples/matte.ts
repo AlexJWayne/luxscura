@@ -8,7 +8,7 @@ import {
 } from 'luxscura'
 import { createMatteAppearance } from 'luxscura/matte'
 import { tgpu } from 'typegpu'
-import { mat4x4f, vec3f } from 'typegpu/data'
+import { mat4x4f, vec3f, vec4f } from 'typegpu/data'
 import { mat4 } from 'wgpu-matrix'
 
 /** Renders once on a canvas with its width and height already set. */
@@ -48,7 +48,7 @@ export async function createMatteExample(canvas: HTMLCanvasElement) {
 		appearance: createMatteAppearance({
 			color: () => {
 				'use gpu'
-				return vec3f(0.15, 0.5, 0.85)
+				return vec4f(0.15, 0.5, 0.85, 1)
 			},
 			lighting: createRaymarchConstantLighting({
 				ambient: vec3f(0.2, 0.05, 0.05),

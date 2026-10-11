@@ -46,7 +46,7 @@ const program = createRaymarchProgram({
 	appearance: createMatteAppearance({
 		color: () => {
 			'use gpu'
-			return vec3f(0.15, 0.5, 0.85)
+			return vec4f(0.15, 0.5, 0.85, 1)
 		},
 		lighting: createRaymarchConstantLighting({
 			ambient: vec3f(0.2, 0.05, 0.05),

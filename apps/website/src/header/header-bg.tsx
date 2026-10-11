@@ -7,7 +7,15 @@ import {
 	type RaymarchResult,
 } from 'luxscura'
 import type { RenderFlag, TgpuRoot, TgpuTexture } from 'typegpu'
-import { f32, mat4x4f, type v2f, type v3f, vec2f, vec3f } from 'typegpu/data'
+import {
+	f32,
+	mat4x4f,
+	type v2f,
+	type v3f,
+	vec2f,
+	vec3f,
+	vec4f,
+} from 'typegpu/data'
 import { discard, dot, floor, fract, mix, sin, smoothstep } from 'typegpu/std'
 import { mat4 } from 'wgpu-matrix'
 import { hsvToRgb } from '../hsv'
@@ -91,7 +99,7 @@ export function createHeaderBgRenderer(
 						smoothstep(1, background.appearance.shadingMidPoint, lighting),
 				)
 
-				return background.appearance.baseColor * alpha
+				return vec4f(background.appearance.baseColor * alpha, 1)
 			},
 		},
 

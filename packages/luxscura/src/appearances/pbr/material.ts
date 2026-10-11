@@ -2,7 +2,7 @@ import { f32, type Infer, struct, vec3f } from 'typegpu/data'
 import { mix } from 'typegpu/std'
 
 /**
- * GPU material schema for an opaque surface using metallic/roughness shading.
+ * GPU material schema for a surface using metallic/roughness shading and opacity.
  * Colors are linear RGB. Callers must supply finite values within the documented
  * ranges; constructing this struct does not clamp or validate material values.
  */
@@ -25,6 +25,9 @@ export const PbrMaterial = struct({
 	 * Does not illuminate other surfaces or disable this material's reflections.
 	 */
 	emission: vec3f,
+
+	/** Opacity of the entire shaded surface in [0, 1]: 0 is transparent, 1 is opaque. */
+	opacity: f32,
 })
 export type PbrMaterial = Infer<typeof PbrMaterial>
 
@@ -36,6 +39,7 @@ export function debugPbrMaterial(luminance: number): PbrMaterial {
 		metallic: f32(0),
 		roughness: f32(1),
 		emission: vec3f(luminance),
+		opacity: f32(1),
 	})
 }
 
@@ -50,5 +54,6 @@ export function mixPbrMaterials(
 		metallic: mix(a.metallic, b.metallic, amount),
 		roughness: mix(a.roughness, b.roughness, amount),
 		emission: mix(a.emission, b.emission, amount),
+		opacity: mix(a.opacity, b.opacity, amount),
 	})
 }

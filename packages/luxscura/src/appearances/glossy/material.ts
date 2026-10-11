@@ -2,7 +2,7 @@ import { f32, type Infer, struct, vec3f } from 'typegpu/data'
 import { mix } from 'typegpu/std'
 
 /**
- * GPU material schema for an opaque surface with adjustable shiny highlights.
+ * GPU material schema for a surface with adjustable shiny highlights and opacity.
  * Colors are linear RGB. Callers must supply finite values within the documented
  * ranges; constructing this struct does not clamp or validate material values.
  */
@@ -21,6 +21,9 @@ export const GlossyMaterial = struct({
 
 	/** Nonnegative outgoing linear RGB added independently of illumination; may exceed 1. */
 	emission: vec3f,
+
+	/** Opacity of the entire shaded surface in [0, 1]: 0 is transparent, 1 is opaque. */
+	opacity: f32,
 })
 export type GlossyMaterial = Infer<typeof GlossyMaterial>
 
@@ -36,5 +39,6 @@ export function mixGlossyMaterials(
 		specular: mix(a.specular, b.specular, amount),
 		shininess: mix(a.shininess, b.shininess, amount),
 		emission: mix(a.emission, b.emission, amount),
+		opacity: mix(a.opacity, b.opacity, amount),
 	})
 }

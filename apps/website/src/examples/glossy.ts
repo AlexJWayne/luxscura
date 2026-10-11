@@ -53,6 +53,7 @@ export async function createGlossyExample(canvas: HTMLCanvasElement) {
 					specular: vec3f(1),
 					shininess: 128,
 					emission: vec3f(0),
+					opacity: 1,
 				})
 			},
 			lighting: createRaymarchConstantLighting({

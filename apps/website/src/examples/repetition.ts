@@ -7,7 +7,15 @@ import {
 	type RaymarchResult,
 } from 'luxscura'
 import { tgpu } from 'typegpu'
-import { f32, mat4x4f, type v2f, type v3f, vec2f, vec3f } from 'typegpu/data'
+import {
+	f32,
+	mat4x4f,
+	type v2f,
+	type v3f,
+	vec2f,
+	vec3f,
+	vec4f,
+} from 'typegpu/data'
 import {
 	abs,
 	clamp,
@@ -66,7 +74,7 @@ export async function createRepetitionExample(canvas: HTMLCanvasElement) {
 			// The alignment between the normal and viewing direction where shading is brightest.
 			shadingMidPoint: 0.4,
 
-			// Returns the surface color shaded by its orientation toward the camera.
+			// Returns the surface color with opacity based on its orientation toward the camera.
 			shade: (result: RaymarchResult) => {
 				'use gpu'
 				if (!result.isHit) discard()
@@ -79,7 +87,7 @@ export async function createRepetitionExample(canvas: HTMLCanvasElement) {
 						smoothstep(1, repetition.appearance.shadingMidPoint, lighting),
 				)
 
-				return repetition.appearance.baseColor * alpha
+				return vec4f(repetition.appearance.baseColor, alpha)
 			},
 		},
 

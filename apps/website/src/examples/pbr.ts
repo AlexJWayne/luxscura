@@ -54,6 +54,7 @@ export async function createPbrExample(canvas: HTMLCanvasElement) {
 					metallic: 0.5,
 					roughness: 0.08,
 					emission: vec3f(0),
+					opacity: 1,
 				})
 			},
 			lighting: createRaymarchConstantLighting({

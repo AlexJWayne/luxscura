@@ -13,8 +13,8 @@ import {
 import { AABB } from './aabb'
 
 export const RaymarchCamera = struct({
-	viewProjectionMatrix: mat4x4f,
 	position: vec3f,
+	viewProjectionMatrix: mat4x4f,
 })
 export type RaymarchCamera = Infer<typeof RaymarchCamera>
 

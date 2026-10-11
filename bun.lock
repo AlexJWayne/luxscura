@@ -19,7 +19,7 @@
         "luxscura": "workspace:*",
         "preact": "^10.29.8",
         "shiki": "^4.4.3",
-        "typegpu": "^0.12.6",
+        "typegpu": "^0.12.7",
         "wgpu-matrix": "^3.4.2",
       },
       "devDependencies": {
@@ -28,7 +28,7 @@
         "@webgpu/types": "^0.1.74",
         "tailwindcss": "^4.3.3",
         "typescript": "^6.0.2",
-        "unplugin-typegpu": "^0.12.4",
+        "unplugin-typegpu": "^0.12.5",
         "vite": "^8.3.0",
       },
     },
@@ -38,9 +38,9 @@
       "devDependencies": {
         "@types/bun": "^1.3.14",
         "@webgpu/types": "^0.1.69",
-        "typegpu": "^0.12.6",
+        "typegpu": "^0.12.7",
         "typescript": "npm:tsover@6.0.2",
-        "unplugin-typegpu": "^0.12.4",
+        "unplugin-typegpu": "^0.12.5",
         "vite": "^8.0.0",
       },
       "peerDependencies": {
@@ -432,7 +432,7 @@
 
     "typed-binary": ["typed-binary@4.3.3", "", {}, "sha512-W2hLsSzt3k/tg38gDE4Fn/QiwcoqGuUHBc2cb3mXuH7KcYxe/GM57vzW14s2/bawB4R5knGgGq8Xb57vsaJ4Sg=="],
 
-    "typegpu": ["typegpu@0.12.6", "", { "dependencies": { "tinyest": "~0.3.4", "tsover-runtime": "^0.0.7", "typed-binary": "^4.3.3" }, "bin": { "typegpu": "./bin.mjs" } }, "sha512-EypNvqL2IA3BL2IsJbd12oOHaxmvtjFVz0+IZTmquc8BZcYYAlL8piT6V0r+GViIWXGr5703Y0P5FswuLKytMA=="],
+    "typegpu": ["typegpu@0.12.7", "", { "dependencies": { "tinyest": "~0.3.4", "tsover-runtime": "^0.0.7", "typed-binary": "^4.3.3" }, "bin": { "typegpu": "./bin.mjs" } }, "sha512-aFMKw8Pwl/kcUvUgrzwdzjmnqAp6Zl62cogcaBy5RI0Ky1W7mHhC+E/2MAg+KExnY+a0w9oQJtB3gvNAaB2EmQ=="],
 
     "typescript": ["tsover@6.0.2", "", { "dependencies": { "minimatch": "^9.0.0", "unplugin": "^2.0.0" }, "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jvGCZ82Hg/vT5kqpg/+DU1emj1tEYJcigocE7eqqReV/jYsxk4c/Ggu6B69z9JR+MB9DvZbN2VpSJYmehIeXuQ=="],
 
@@ -450,7 +450,7 @@
 
     "unplugin": ["unplugin@2.3.11", "", { "dependencies": { "@jridgewell/remapping": "^2.3.5", "acorn": "^8.15.0", "picomatch": "^4.0.3", "webpack-virtual-modules": "^0.6.2" } }, "sha512-5uKD0nqiYVzlmCRs01Fhs2BdkEgBS3SAVP6ndrBsuK42iC2+JHyxM05Rm9G8+5mkmRtzMZGY8Ct5+mliZxU/Ww=="],
 
-    "unplugin-typegpu": ["unplugin-typegpu@0.12.4", "", { "dependencies": { "@babel/parser": "^7.29.0", "@babel/traverse": "^7.29.0", "@babel/types": "^7.29.0", "ast-kit": "^2.2.0", "defu": "^6.1.4", "magic-string": "^0.30.21", "pathe": "^2.0.3", "picomatch": "^4.0.4", "tinyest": "~0.3.4", "tinyest-for-wgsl": "~0.4.2", "unplugin": "^3.0.0" }, "peerDependencies": { "typegpu": "^0.12.6" } }, "sha512-nssBuTMPFT1qvtxdSgsRci5XxBw+L1NP+KGYKryMe4FXpHeaa6pq2H450aB5jFq3ZXGqu8QluMpxRMBkqm8oiQ=="],
+    "unplugin-typegpu": ["unplugin-typegpu@0.12.5", "", { "dependencies": { "@babel/parser": "^7.29.0", "@babel/traverse": "^7.29.0", "@babel/types": "^7.29.0", "ast-kit": "^2.2.0", "defu": "^6.1.4", "magic-string": "^0.30.21", "pathe": "^2.0.3", "picomatch": "^4.0.4", "tinyest": "~0.3.4", "tinyest-for-wgsl": "~0.4.2", "unplugin": "^3.0.0" }, "peerDependencies": { "typegpu": "^0.12.7" } }, "sha512-rNAOhc3KYA0uZU0WK2WxwzCSAPPaS6svvqT6Km1+MPJKL32cBw1Hk2z67Yn2sgPX3RGPruBPF00p40y8B2vfdA=="],
 
     "update-browserslist-db": ["update-browserslist-db@1.3.3", "", { "dependencies": { "escalade": "^3.2.0", "picocolors": "^1.1.1" }, "peerDependencies": { "browserslist": ">= 4.21.0" }, "bin": { "update-browserslist-db": "cli.js" } }, "sha512-pJ2sYawQS0R/WI928Gj5GlPhTGzbMelq0+4INtSYNDV9ErKJcX6xjGWkoG/VnB3dpUm00zALaqkrUD77pO5TDQ=="],
 

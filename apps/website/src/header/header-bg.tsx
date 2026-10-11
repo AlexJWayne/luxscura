@@ -44,8 +44,8 @@ export function createHeaderBgRenderer(
 		const cameraValues = createCamera(canvas)
 		cameraUniform.write(
 			RaymarchCamera({
-				viewProjectionMatrix: cameraValues.viewProjectionMatrix,
 				position: cameraValues.cameraPosition,
+				viewProjectionMatrix: cameraValues.viewProjectionMatrix,
 			}),
 		)
 	}

@@ -1,6 +1,6 @@
 {
 	"name": "luxscura",
-	"version": "0.1.0",
+	"version": "0.2.0",
 	"description": "A TypeGPU ray marching renderer",
 	"license": "MIT",
 	"author": "Alex Wayne",

@@ -9,7 +9,7 @@ export function Callout({
 }) {
 	return (
 		<div class="space-y-2 text-base leading-relaxed">
-			<h3 class="font-oxanium text-xl font-medium text-heading">{title}</h3>
+			<h3 class="font-heading text-xl font-medium text-heading">{title}</h3>
 			<p>{children}</p>
 		</div>
 	)

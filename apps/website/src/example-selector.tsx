@@ -75,7 +75,7 @@ export function ExampleSelector() {
 		>
 			<h2
 				id="gallery-examples-title"
-				class="font-oxanium text-2xl font-medium text-heading"
+				class="font-heading text-2xl font-medium text-heading"
 			>
 				Examples
 			</h2>

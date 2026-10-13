@@ -14,19 +14,13 @@ export function useLuxscuraRenderer(
 		const canvas = canvasRef.current
 		if (!canvas) return
 
-		let renderer: { destroy: () => void; resize?: () => void } | undefined
-		let disposed = false
+		const renderer = createRenderer(root, canvas)
 
-		const nextRenderer = createRenderer(root, canvas)
-		if (disposed) nextRenderer.destroy()
-		else renderer = nextRenderer
-
-		const resizeObserver = new ResizeObserver(() => renderer?.resize?.())
-		if (canvasRef.current) resizeObserver.observe(canvasRef.current)
+		const resizeObserver = new ResizeObserver(() => renderer.resize?.())
+		resizeObserver.observe(canvas)
 
 		return () => {
-			disposed = true
-			renderer?.destroy()
+			renderer.destroy()
 			resizeObserver.disconnect()
 		}
 	}, [createRenderer, root])

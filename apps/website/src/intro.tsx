@@ -39,7 +39,7 @@ export function Intro() {
 function AboutLuxscura() {
 	return (
 		<div class="space-y-4">
-			<h2 class="font-oxanium text-3xl font-medium leading-tight text-heading">
+			<h2 class="font-heading text-3xl font-medium leading-tight text-heading">
 				Raymarching with TypeScript
 			</h2>
 			<p>
@@ -55,7 +55,7 @@ function AboutLuxscura() {
 function GetStarted() {
 	return (
 		<div class="min-w-0 space-y-4">
-			<h2 class="font-oxanium text-xl font-medium text-heading">Get started</h2>
+			<h2 class="font-heading text-xl font-medium text-heading">Get started</h2>
 			<pre class="overflow-x-auto rounded-lg border border-brand-300/10 bg-gray-900 p-4 text-sm leading-6">
 				<code class="text-brand-100">{`npm install luxscura typegpu
 npm install --save-dev unplugin-typegpu`}</code>

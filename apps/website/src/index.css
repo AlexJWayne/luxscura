@@ -11,8 +11,7 @@
 	--color-heading: var(--color-brand-200);
 	--font-orbitron: "Orbitron", sans-serif;
 	--font-sans: "Outfit", sans-serif;
-	--font-outfit: "Outfit", sans-serif;
-	--font-oxanium: "Oxanium", sans-serif;
+	--font-heading: "Oxanium", sans-serif;
 }
 
 .example-source pre {

@@ -4,7 +4,7 @@ import { TextLink } from './components/text-link'
 export function FurtherReading() {
 	return (
 		<footer class="mt-12 space-y-4 border-t border-brand-300/10 pt-8 text-base leading-relaxed">
-			<h2 class="font-oxanium text-xl font-medium text-heading">
+			<h2 class="font-heading text-xl font-medium text-heading">
 				Further reading
 			</h2>
 			<ul class="space-y-2">

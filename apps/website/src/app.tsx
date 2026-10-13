@@ -8,7 +8,7 @@ const root = await tgpu.init()
 
 export function App() {
 	return (
-		<div class="bg-gray-950 min-h-screen text-gray-300 flex flex-col font-outfit">
+		<div class="bg-gray-950 min-h-screen text-gray-300 flex flex-col font-sans">
 			<LuxscuraHeader root={root} />
 
 			<Intro />

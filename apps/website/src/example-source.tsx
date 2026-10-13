@@ -65,16 +65,13 @@ export function ExampleSource({
 	}
 
 	return (
-		<section
-			aria-label="Source code"
-			class="my-8 w-full max-w-[min(800px,calc(100vw-3rem))] rounded-xl border border-white/10 bg-[#1e1e2e] shadow-xl"
-		>
+		<section aria-label="Source code" class="w-full bg-[#1e1e2e]">
 			<div class="sticky top-3 z-10 flex h-0 items-start justify-end pr-3 pt-3">
 				<button
 					type="button"
 					disabled={sourceState.status !== 'ready'}
 					onClick={copySource}
-					class="rounded-md border border-white/20 bg-gray-900/90 px-3 py-1.5 text-xs font-medium text-gray-100 shadow-lg backdrop-blur transition-colors hover:border-purple-400 hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+					class="cursor-pointer rounded-md border border-white/20 bg-gray-900/90 px-3 py-1.5 text-sm font-medium text-gray-100 shadow-lg backdrop-blur transition-colors hover:border-brand-400 hover:bg-gray-800 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-300 disabled:cursor-not-allowed disabled:opacity-50"
 				>
 					{copyStatus === 'copied'
 						? 'Copied!'
@@ -90,7 +87,7 @@ export function ExampleSource({
 					dangerouslySetInnerHTML={{ __html: sourceState.html }}
 				/>
 			) : (
-				<p class="px-5 py-6 text-sm text-gray-400" role="status">
+				<p class="p-6 pt-16 text-sm leading-6 text-gray-400" role="status">
 					{sourceState.status === 'error'
 						? 'Could not load the source code.'
 						: 'Loading source code…'}

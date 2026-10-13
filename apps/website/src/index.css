@@ -3,6 +3,12 @@
 @import "tailwindcss";
 
 @theme {
+	--color-brand-100: var(--color-purple-100);
+	--color-brand-200: var(--color-purple-200);
+	--color-brand-300: var(--color-purple-300);
+	--color-brand-400: var(--color-purple-400);
+	--color-brand-950: var(--color-purple-950);
+	--color-heading: var(--color-brand-200);
 	--font-orbitron: "Orbitron", sans-serif;
 	--font-sans: "Outfit", sans-serif;
 	--font-outfit: "Outfit", sans-serif;
@@ -10,12 +16,7 @@
 }
 
 .example-source pre {
-	min-width: max-content;
-	margin: 0;
-	padding: 3.5rem 1.25rem 1.25rem;
-	border-radius: 0.75rem;
-	font-size: 0.8125rem;
-	line-height: 1.65;
+	@apply min-w-max m-0 rounded-none p-6 pt-16 text-sm leading-6;
 	tab-size: 2;
 }
 

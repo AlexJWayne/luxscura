@@ -41,10 +41,10 @@ export function ExampleRenderer({
 
 	return (
 		<canvas
-			class="h-auto max-h-[calc(100vh-8rem)] w-full max-w-[min(800px,calc(100vw-3rem))]"
+			class="block h-auto w-full"
 			ref={canvasRef}
-			width={800}
-			height={800}
+			width={1152}
+			height={720}
 		/>
 	)
 }

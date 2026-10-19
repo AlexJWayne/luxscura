@@ -208,7 +208,7 @@ export function Logo({ size, root }: { size: number; root: TgpuRoot }) {
 			ref={canvas}
 			width={size * window.devicePixelRatio * 1.5}
 			height={size * window.devicePixelRatio * 1.5}
-			style={{ width: size, height: size }}
+			style={{ width: `${size}px`, height: `${size}px` }}
 		/>
 	)
 }

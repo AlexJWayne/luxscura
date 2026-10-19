@@ -15,11 +15,11 @@
 		"publish": "npm publish --workspace=luxscura"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.4.7",
+		"@biomejs/biome": "^2.5.15",
 		"typescript": "npm:tsover@6.0.2"
 	},
 	"overrides": {
 		"typescript": "npm:tsover@6.0.2"
 	},
-	"packageManager": "bun@1.3.10"
+	"packageManager": "bun@1.4.3"
 }

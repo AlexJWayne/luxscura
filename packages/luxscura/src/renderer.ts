@@ -330,22 +330,23 @@ function createRaymarchPipeline({
  * raymarching, normal calculation, appearance, depth, and draw submission to the
  * surface supplied by the program.
  *
- * Program preparation and pipeline compilation are repeated when the program
- * version changes, allowing shader HMR to use the updated callbacks.
+ * Program creation, preparation, and pipeline compilation are repeated when the
+ * program version changes, using the updated factory with the same context.
  *
  * @returns A function that draws a requested number of raymarched instances.
  */
-export function createRaymarchRenderer({
+export function createRaymarchRenderer<TContext = undefined>({
 	root,
 	program: programDefinition,
+	context = undefined as TContext,
 	renderTarget,
 	prepare = (program) => program,
 	preparePipeline,
 }: {
 	root: TgpuRoot
 
-	/** Program providing pipeline options, a version, and shader callbacks. */
-	program: Readonly<RaymarchProgramDefinition>
+	/** Program providing pipeline options, a version, and a shader factory. */
+	program: Readonly<RaymarchProgramDefinition<TContext>>
 
 	/** Render target configuration used to create a compatible pipeline. */
 	renderTarget?: Readonly<RaymarchRenderTargetOptions>
@@ -362,9 +363,13 @@ export function createRaymarchRenderer({
 	preparePipeline?: (
 		pipeline: TgpuRenderPipeline<{ color: Vec4f }>,
 	) => TgpuRenderPipeline<{ color: Vec4f }>
-}) {
+} & (undefined extends NoInfer<TContext>
+	? { context?: NoInfer<TContext> }
+	: { context: NoInfer<TContext> })) {
 	function createRenderer() {
-		const { camera, surface, appearance } = prepare(programDefinition.program)
+		const { camera, surface, appearance } = prepare(
+			programDefinition.create(context),
+		)
 		const renderer = createRaymarchPipeline({
 			root,
 			options: programDefinition.options,

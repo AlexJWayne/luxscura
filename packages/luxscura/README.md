@@ -246,9 +246,11 @@ const appearance = createPbrAppearance({
 
 ### Program — `createRaymarchProgram`
 
-A program describes what to render. `createRaymarchProgram` stores the GPU
-callbacks and compilation options in a versioned `RaymarchProgramDefinition`;
-it does not allocate GPU resources. Pass that definition to a renderer.
+A program describes what to render. `createRaymarchProgram` accepts either GPU
+callbacks directly or a factory that creates them from typed dependencies. It
+stores a factory and compilation options in a versioned `RaymarchProgramDefinition`;
+the direct form is wrapped in a factory automatically. Defining a program does
+not invoke the factory or allocate GPU resources. Pass the definition to a renderer.
 
 Using named GPU callbacks keeps the call small (their implementations follow the
 same pattern as the quick start):
@@ -268,6 +270,68 @@ const program = createRaymarchProgram({
   },
 })
 ```
+
+When callbacks need resources supplied later, pass compilation options as the
+first argument and a factory as the second:
+
+```ts
+import type { TgpuUniform } from 'typegpu'
+import { f32, vec3f, vec4f } from 'typegpu/data'
+import { length } from 'typegpu/std'
+import { AABB, createRaymarchProgram, type RaymarchCamera } from 'luxscura'
+
+type SphereContext = {
+  camera: () => RaymarchCamera
+  radius: TgpuUniform<typeof f32>
+}
+
+const sphereProgram = createRaymarchProgram(
+  { epsilon: 0.001 },
+  ({ camera, radius }: SphereContext) => ({
+    camera,
+    surface: {
+      bounds: () => {
+        'use gpu'
+        return AABB({ min: vec3f(-radius.$), max: vec3f(radius.$) })
+      },
+      sd: (point) => {
+        'use gpu'
+        return length(point) - radius.$
+      },
+    },
+    appearance: () => {
+      'use gpu'
+      return vec4f(1, 0.2, 0.1, 1)
+    },
+  }),
+)
+```
+
+Create the resources in application setup and supply them to the renderer:
+
+```ts
+const radius = root.createUniform(f32, 0.5)
+const renderSphere = createRaymarchRenderer({
+  root,
+  program: sphereProgram,
+  context: { camera: getCamera, radius },
+})
+```
+
+The program determines the required context type. Missing or incompatible
+context is a type error. Direct programs and zero-argument factories do not
+require a `context` argument.
+
+The factory is a synchronous JavaScript setup function; the callbacks it returns
+are GPU functions. Luxscura invokes it during renderer creation and again when
+the program version changes, before running `prepare` and compiling the pipeline.
+It does not run on ordinary draws. Updating `radius` with `radius.write(...)`
+changes what the shaders read without rebuilding the program.
+
+Context belongs to each renderer, so several renderers can share one program
+with different resources. Luxscura retains and passes the supplied context; it
+does not create or destroy its resources. Allocate caller-owned GPU resources
+outside the factory so shader rebuilds can reuse them.
 
 The property paths below follow the nesting in the call above. Callback types
 include argument and return types; `v3f` and `v4f` are TypeGPU float vector types
@@ -462,9 +526,21 @@ Your application's TypeGPU root, used to create the pipeline.
 
 | Type | Default |
 | --- | --- |
-| `Readonly<RaymarchProgramDefinition>` | Required |
+| `Readonly<RaymarchProgramDefinition<TContext>>` | Required |
 
 The definition returned by `createRaymarchProgram`.
+
+#### `context`
+
+| Type | Default |
+| --- | --- |
+| `TContext` (inferred from `program`) | Required unless the type accepts `undefined` |
+
+Setup-time dependencies passed to the program factory. The same context is used
+when this renderer rebuilds after a program update. Changing the context object
+itself does not trigger recompilation; use buffers or uniforms for changing GPU
+data. If an edit adds required dependencies, recreate the renderer with a context
+that supplies them.
 
 #### `renderTarget`
 
@@ -508,8 +584,9 @@ color resolve target.
 | --- | --- |
 | `(program: RaymarchProgram) => RaymarchProgram` | None |
 
-Transforms the camera, surface, or appearance callbacks before compilation. Return the
-resulting `RaymarchProgram`, for example to adapt callbacks to application resources.
+Transforms the camera, surface, or appearance callbacks after the factory runs
+and before compilation. Return the resulting `RaymarchProgram`, for example to
+decorate its appearance or adapt its geometry.
 
 #### `preparePipeline`
 
@@ -574,8 +651,9 @@ per-instance values in a GPU buffer to change how the program renders that insta
 ## Hot module reloading
 
 If shader edits cause a full page reload or do not update the renderer, enable
-Luxscura's hot reload support. With Vite, pass `import.meta.hot` as the second
-argument to `createRaymarchProgram` and call `import.meta.hot?.accept()`:
+Luxscura's hot reload support. With Vite, pass `import.meta.hot` as the final
+argument to `createRaymarchProgram` and call `import.meta.hot?.accept()`. It is
+the second argument for the direct form:
 
 ```ts
 const program = createRaymarchProgram({
@@ -588,8 +666,19 @@ const program = createRaymarchProgram({
 import.meta.hot?.accept()
 ```
 
+For the factory form, it is the third argument:
+
+```ts
+const program = createRaymarchProgram(options, createProgram, import.meta.hot)
+
+import.meta.hot?.accept()
+```
+
 On a module update, Luxscura preserves the program definition and increments its
-version. The existing renderer rebuilds its pipeline on the next draw using the
-updated callbacks and options.
+version. Each existing renderer invokes the updated factory with its original
+context and rebuilds its pipeline on its next draw, using the updated options.
+Both preparation hooks run again; caller-owned buffers and uniforms remain in
+place. Changing the required context shape may require recreating the renderer
+or reloading the application.
 
 Currently, only one HMR-backed program can be defined per module.

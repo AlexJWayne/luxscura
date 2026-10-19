@@ -134,11 +134,11 @@ export interface RaymarchProgram {
 	appearance: RaymarchAppearance
 }
 
-/** Versioned program with its pipeline compilation options. */
-export interface RaymarchProgramDefinition {
+/** Versioned program factory with its pipeline compilation options. */
+export interface RaymarchProgramDefinition<TContext = undefined> {
 	version: number
 	options: RaymarchProgramOptions
-	program: RaymarchProgram
+	create: (context: TContext) => RaymarchProgram
 }
 
 /** Minimal hot-module context used to retain a program across reevaluations. */
@@ -150,20 +150,23 @@ const HOT_DATA_KEY = 'raymarchProgramDefinition'
 
 /**
  * Creates a versioned program definition without allocating GPU resources. It
- * holds the surface, camera, and appearance callbacks,
+ * stores a factory for surface, camera, and appearance callbacks,
  * and the options used to compile them into a raymarching pipeline. Callbacks
  * may read changing buffer data without rebuilding the pipeline.
  *
  * ```ts
  * const program = createRaymarchProgram({ ...program, options })
+ * const dependentProgram = createRaymarchProgram(options, (context: Context) => ({ ...callbacks }))
  * ```
  *
  * ## Vite Hot Reloading
  *
  * When `hot` is provided, reevaluating the module updates the existing program
  * definition and increments its version. Renderer instances observe that
- * version and rebuild their pipelines using the updated callbacks. The
- * defining module must call `import.meta.hot?.accept()` for this behavior, and
+ * version and rerun the factory with each renderer's existing context before
+ * rebuilding its pipeline. Factories run during renderer setup and rebuilding,
+ * not on every draw. Caller-owned resources should be created outside the factory.
+ * The defining module must call `import.meta.hot?.accept()` for this behavior, and
  * may currently define only one HMR-backed raymarch program.
  *
  * ```ts
@@ -174,26 +177,44 @@ const HOT_DATA_KEY = 'raymarchProgramDefinition'
  * @returns A read-only program definition consumed by raymarch renderer factories.
  */
 export function createRaymarchProgram(
-	{
-		options,
-		...program
-	}: RaymarchProgram & {
-		options: RaymarchProgramOptions
-	},
-
-	/**
-	 * Optional hot-module context used to preserve and update the program
-	 * across module reevaluations.
-	 */
+	program: RaymarchProgram & { options: RaymarchProgramOptions },
 	hot?: RaymarchHotContext,
-): Readonly<RaymarchProgramDefinition> {
+): Readonly<RaymarchProgramDefinition>
+
+export function createRaymarchProgram<TContext = undefined>(
+	options: RaymarchProgramOptions,
+	create: (context: TContext) => RaymarchProgram,
+	hot?: RaymarchHotContext,
+): Readonly<RaymarchProgramDefinition<TContext>>
+
+export function createRaymarchProgram<TContext = undefined>(
+	input:
+		| RaymarchProgramOptions
+		| (RaymarchProgram & { options: RaymarchProgramOptions }),
+	createOrHot?: ((context: TContext) => RaymarchProgram) | RaymarchHotContext,
+	hot?: RaymarchHotContext,
+): Readonly<RaymarchProgramDefinition<TContext>> {
+	let options: RaymarchProgramOptions
+	let create: (context: TContext) => RaymarchProgram
+	if (typeof createOrHot === 'function') {
+		options = input as RaymarchProgramOptions
+		create = createOrHot
+	} else {
+		const { options: directOptions, ...program } = input as RaymarchProgram & {
+			options: RaymarchProgramOptions
+		}
+		options = directOptions
+		create = () => program
+		hot = createOrHot
+	}
+
 	const definition = (hot?.data[HOT_DATA_KEY] as
-		| RaymarchProgramDefinition
-		| undefined) ?? { version: 0, options, program }
+		| RaymarchProgramDefinition<TContext>
+		| undefined) ?? { version: 0, options, create }
 
 	definition.version += 1
 	definition.options = options
-	definition.program = program
+	definition.create = create
 	if (hot) hot.data[HOT_DATA_KEY] = definition
 
 	return definition

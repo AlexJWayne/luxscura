@@ -207,9 +207,10 @@ test('rebuilds the pipeline with updated program callbacks and options', () => {
 
 	expect(updatedProgram).toBe(program)
 	expect(program.version).toBe(2)
-	expect(program.program.camera).toBe(updatedBody.camera)
-	expect(program.program.surface).toBe(updatedBody.surface)
-	expect(program.program.appearance).toBe(updatedBody.appearance)
+	const updatedCallbacks = program.create(undefined)
+	expect(updatedCallbacks.camera).toBe(updatedBody.camera)
+	expect(updatedCallbacks.surface).toBe(updatedBody.surface)
+	expect(updatedCallbacks.appearance).toBe(updatedBody.appearance)
 	expect(preparedPrograms).toEqual([initialBody, updatedBody])
 	expect(createRenderPipeline).toHaveBeenCalledTimes(2)
 	expect(createRenderPipeline.mock.calls[1]?.[0]).toMatchObject({
@@ -298,4 +299,114 @@ test('compiles a custom RGBA appearance with screen-space derivatives', () => {
 			Object.defineProperty(globalThis, 'GPUBufferUsage', previousUsage)
 		else Reflect.deleteProperty(globalThis, 'GPUBufferUsage')
 	}
+})
+
+test('defers factories and preserves each renderer context through hot reload', () => {
+	const pipeline = {
+		withColorAttachment() {
+			return this
+		},
+		withDepthStencilAttachment() {
+			return this
+		},
+		draw: mock(() => {}),
+	}
+	const createRenderPipeline = mock((_descriptor: unknown) => pipeline)
+	const root = { createRenderPipeline } as unknown as TgpuRoot
+	const hot: RaymarchHotContext = { data: {} }
+	const body: RaymarchProgram = {
+		camera: () => {
+			'use gpu'
+			return RaymarchCamera({
+				position: vec3f(),
+				viewProjectionMatrix: mat4x4f(),
+			})
+		},
+		surface: {
+			bounds: () => {
+				'use gpu'
+				return AABB({ min: vec3f(), max: vec3f(1) })
+			},
+			sd: () => {
+				'use gpu'
+				return f32(0)
+			},
+		},
+		appearance: () => {
+			'use gpu'
+			return vec4f(1)
+		},
+	}
+	const options = { epsilon: 0.01 }
+	const firstContext = { body: { ...body } }
+	const secondContext = { body: { ...body } }
+	const events: string[] = []
+	const create = mock((context: { body: RaymarchProgram }) => {
+		events.push('create')
+		return context.body
+	})
+	const program = createRaymarchProgram(options, create, hot)
+	expect(create).not.toHaveBeenCalled()
+	const prepare = mock((current: RaymarchProgram) => {
+		events.push('prepare')
+		return current
+	})
+	const preparePipeline: NonNullable<
+		Parameters<typeof createRaymarchRenderer>[0]['preparePipeline']
+	> = (current) => {
+		events.push('pipeline')
+		return current
+	}
+	const firstRender = createRaymarchRenderer({
+		root,
+		program,
+		context: firstContext,
+		prepare,
+		preparePipeline,
+	})
+	const secondRender = createRaymarchRenderer({
+		root,
+		program,
+		context: secondContext,
+		prepare,
+		preparePipeline,
+	})
+	expect(create.mock.calls[0]?.[0]).toBe(firstContext)
+	expect(create.mock.calls[1]?.[0]).toBe(secondContext)
+	expect(prepare.mock.calls[0]?.[0]).toBe(firstContext.body)
+	expect(prepare.mock.calls[1]?.[0]).toBe(secondContext.body)
+	const attachments = {
+		colorAttachment: {} as ColorAttachment,
+		depthStencilAttachment: {} as DepthStencilAttachment,
+	}
+	firstRender(attachments)
+	secondRender(attachments)
+	expect(create).toHaveBeenCalledTimes(2)
+	const updatedCreate = mock((context: { body: RaymarchProgram }) => {
+		events.push('updated-create')
+		return { ...context.body, appearance: body.appearance }
+	})
+	expect(createRaymarchProgram(options, updatedCreate, hot)).toBe(program)
+	expect(updatedCreate).not.toHaveBeenCalled()
+	firstRender(attachments)
+	secondRender(attachments)
+	firstRender(attachments)
+	expect(updatedCreate).toHaveBeenCalledTimes(2)
+	expect(updatedCreate.mock.calls[0]?.[0]).toBe(firstContext)
+	expect(updatedCreate.mock.calls[1]?.[0]).toBe(secondContext)
+	expect(createRenderPipeline).toHaveBeenCalledTimes(4)
+	expect(events).toEqual([
+		'create',
+		'prepare',
+		'pipeline',
+		'create',
+		'prepare',
+		'pipeline',
+		'updated-create',
+		'prepare',
+		'pipeline',
+		'updated-create',
+		'prepare',
+		'pipeline',
+	])
 })
